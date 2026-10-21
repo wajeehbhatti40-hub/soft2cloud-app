@@ -1,0 +1,936 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Soft2Cloud Mart POS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style id="pg">@page{size:80mm auto;margin:2mm}</style>
+<style>
+/* Layout: register-style shell — top bar with tabs; billing = product shelf left, live bill right (stacks on phones) */
+:root{
+  --bg:#eef2f7;--surface:#ffffff;--sunk:#f6f8fb;--ink:#111a2b;--muted:#5b6880;--line:#dbe2ec;
+  --accent:#1d5bd8;--accent-ink:#ffffff;--accent-soft:#e3ebfb;
+  --ok:#1d7f47;--ok-soft:#e1f3e8;--warn:#a5650f;--warn-soft:#fbefd9;--bad:#c23328;--bad-soft:#fbe4e1;
+  --scrim:rgba(5,10,20,.55);
+  --f-display:"Bricolage Grotesque","Plus Jakarta Sans",system-ui,sans-serif;
+  --f-body:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b111b;--surface:#131b28;--sunk:#0f1622;--ink:#e6ecf5;--muted:#93a1b8;--line:#243044;
+  --accent:#6f9dff;--accent-ink:#0a1222;--accent-soft:#1a2947;
+  --ok:#52c585;--ok-soft:#14301f;--warn:#e7ad52;--warn-soft:#33260f;--bad:#f06a5f;--bad-soft:#3a1714;
+  --scrim:rgba(0,0,0,.7);color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b111b;--surface:#131b28;--sunk:#0f1622;--ink:#e6ecf5;--muted:#93a1b8;--line:#243044;
+  --accent:#6f9dff;--accent-ink:#0a1222;--accent-soft:#1a2947;
+  --ok:#52c585;--ok-soft:#14301f;--warn:#e7ad52;--warn-soft:#33260f;--bad:#f06a5f;--bad-soft:#3a1714;
+  --scrim:rgba(0,0,0,.7);color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;padding:10px 16px;max-width:1400px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:var(--f-display);font-weight:700;font-size:15px;flex:none}
+.brand b{font-family:var(--f-display);font-size:18px;display:block;line-height:1.1}
+.brand small{color:var(--muted);font-size:12px}
+.tabs{display:flex;gap:4px;overflow-x:auto;max-width:100%}
+.tab{border:0;background:none;padding:8px 12px;border-radius:8px;cursor:pointer;color:var(--muted);font-weight:600;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--accent-soft);color:var(--accent)}
+.tab .beta{font-size:10px;letter-spacing:.06em;text-transform:uppercase;margin-left:4px;padding:1px 5px;border-radius:4px;border:1px solid currentColor}
+.hright{display:flex;gap:10px;align-items:center}
+.clock{color:var(--muted);font-size:12px}
+.shiftpill{border:0;cursor:pointer}
+main{max-width:1400px;margin:0 auto;padding-block:16px 40px;padding-inline:16px}
+h2{font-family:var(--f-display);font-size:22px;margin:0;text-wrap:balance}
+h3{font-family:var(--f-display);font-size:16px;margin:0}
+.sub{color:var(--muted);margin:2px 0 0}
+.label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.btn{border:1px solid var(--line);background:var(--surface);padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--bad)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field input,.field select,.field textarea,.inp{border:1px solid var(--line);background:var(--sunk);border-radius:8px;padding:9px 10px;width:100%;min-width:0}
+textarea{resize:vertical}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap;background:var(--sunk);color:var(--muted)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.auto{background:var(--accent-soft);color:var(--accent)}
+.aisle{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.empty{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:var(--r)}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:12px;margin-bottom:14px}
+.ph{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:820px}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;background:var(--sunk)}
+td.r,th.r{text-align:right}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--sunk)}
+.noprint-note{font-size:12px;color:var(--muted)}
+
+/* Billing */
+.gate{max-width:440px;margin:40px auto;padding:24px;display:flex;flex-direction:column;gap:14px}
+.pos{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:16px;align-items:start}
+@media (max-width:900px){.pos{grid-template-columns:1fr}}
+.scanbar{display:flex;gap:8px;align-items:center;padding:6px 6px 6px 12px;margin-bottom:10px}
+.scanbar svg{flex:none;color:var(--muted)}
+.scanbar input{border:0;background:transparent;font-size:16px;padding:6px 2px;width:100%;min-width:0;outline:none}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:13px;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.chip .n{font-family:var(--f-mono);font-size:11px;opacity:.7;margin-left:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.prod{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:6px;min-height:118px}
+.prod:hover{border-color:var(--accent)}
+.prod:disabled{opacity:.5;cursor:not-allowed}
+.prod .nm{font-weight:600;line-height:1.3;flex:1}
+.prod .row{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap}
+.prod .pr{font-family:var(--f-mono);font-weight:600}
+.cart{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);display:flex;flex-direction:column;max-height:calc(100vh - 100px)}
+@media (max-width:900px){.cart{position:static;max-height:none}}
+.cart-h{display:flex;justify-content:space-between;align-items:baseline;padding:14px 16px;border-bottom:1px solid var(--line);gap:8px}
+.lines{overflow-y:auto;flex:1;min-height:120px}
+.line{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 10px;align-items:center;padding:10px 16px;border-bottom:1px dashed var(--line)}
+.line .nm{font-weight:600;overflow-wrap:anywhere}
+.line .meta{grid-column:1;color:var(--muted);font-size:12px}
+.qty{display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.qty button{border:0;background:var(--sunk);width:28px;height:28px;cursor:pointer;font-weight:700}
+.qty span{min-width:30px;text-align:center}
+.line .amt{text-align:right;min-width:72px}
+.x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:12px;grid-column:3;justify-self:end;padding:0}
+.totals{padding:12px 16px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);background:var(--sunk)}
+.trow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.trow input{width:110px;text-align:right}
+.grand{font-family:var(--f-display);font-size:26px;font-weight:700}
+.pays{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.pay{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 4px;font-size:12px;font-weight:600;cursor:pointer}
+.pay[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.checkout{width:100%;padding:13px;font-size:15px}
+
+/* Inventory */
+.addform{padding:16px;margin-bottom:16px}
+.fgrid{display:grid;grid-template-columns:2.2fr 1.6fr repeat(5,1fr);gap:10px;align-items:end;margin-top:12px}
+@media (max-width:1100px){.fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.fgrid .wide{grid-column:1/-1}}
+.detect{min-height:22px;margin:8px 0;font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tools .inp{width:auto;flex:1 1 180px}
+.adj{display:flex;gap:4px;align-items:center}
+.adj input{width:64px;padding:6px 8px}
+.adj .btn,.rowbtn{padding:6px 9px;font-size:12px}
+
+/* Categories */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.ccard{padding:14px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r)}
+.ccard:hover{border-color:var(--accent)}
+.ccard .top2{display:flex;justify-content:space-between;align-items:start;gap:8px}
+.ccard .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ccard .stats b{display:block;font-family:var(--f-mono);font-size:15px}
+.ccard .stats span{font-size:11px;color:var(--muted)}
+
+/* Sales + Shift */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px}
+@media (max-width:760px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{padding:14px}
+.kpi b{display:block;font-family:var(--f-mono);font-size:22px;margin-top:4px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:16px;align-items:start}
+@media (max-width:900px){.two{grid-template-columns:1fr}}
+.bars{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.bar .bl{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:4px}
+.bar .track{height:8px;background:var(--sunk);border-radius:999px;overflow:hidden}
+.bar .fill{height:100%;background:var(--accent);border-radius:999px}
+.ledger{padding:6px 16px 16px}
+.ledger .lr{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.ledger .lr.total{border-bottom:0;font-weight:700;font-size:16px}
+.closebox{padding:16px;display:flex;flex-direction:column;gap:12px}
+
+/* Store settings */
+.store{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+@media (max-width:900px){.store{grid-template-columns:1fr}}
+.sform{padding:16px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.sform .full{grid-column:1/-1}
+@media (max-width:600px){.sform{grid-template-columns:1fr}}
+
+/* AI */
+.ai{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.ai{grid-template-columns:1fr}}
+.phase{padding:16px;display:flex;flex-direction:column;gap:12px}
+.feat{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;padding:12px 0;border-top:1px solid var(--line)}
+.feat .st{grid-row:span 2;align-self:start}
+.feat p{margin:0;color:var(--muted);grid-column:2}
+.tester{padding:16px;display:flex;flex-direction:column;gap:10px}
+.result{padding:12px;border-radius:8px;background:var(--sunk);min-height:60px}
+
+/* Paper receipt — always white like thermal paper */
+.paper{background:#fff;color:#111;width:100%;max-width:320px;font-family:var(--f-mono);font-size:12px;line-height:1.4;padding:18px 16px;margin:0 auto}
+.paper .c{text-align:center}
+.paper .sname{font-family:var(--f-display);font-size:19px;font-weight:700;line-height:1.15}
+.paper hr{border:0;border-top:1px dashed #777;margin:9px 0}
+.paper .rr{display:flex;justify-content:space-between;gap:8px}
+.paper .big{font-size:15px;font-weight:600}
+.paper .tag{display:inline-block;border:1px solid #111;padding:1px 6px;font-weight:600;letter-spacing:.06em;margin-top:4px}
+.paper .policy{font-size:10.5px;white-space:pre-line}
+.qrwrap{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:8px}
+.qrbox{background:#fff;padding:4px;line-height:0}
+.qrbox img,.qrbox canvas{width:104px;height:104px}
+
+/* Dialogs */
+.overlay{position:fixed;inset:0;background:var(--scrim);display:grid;place-items:center;padding:16px;z-index:50}
+.dialog{width:100%;max-width:380px;max-height:92vh;overflow-y:auto;border-radius:8px;background:var(--surface);box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.dialog.wide{max-width:780px}
+.dialog .paper{border-radius:6px 6px 0 0}
+.dactions{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);flex-wrap:wrap;align-items:center}
+.dactions .btn{flex:1}
+.sheet-h{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line)}
+#reader{width:100%;min-height:220px;background:var(--sunk)}
+.camerr{padding:14px 16px;color:var(--muted);margin:0}
+.lblgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;padding:12px;max-height:60vh;overflow-y:auto;background:var(--sunk)}
+.lbl{background:#fff;color:#111;border:1px dashed #9aa3b2;padding:8px 10px;display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;font-family:var(--f-body)}
+.lbl .ls{font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:#555;grid-column:1/-1}
+.lbl .ln{font-weight:700;font-size:12px;line-height:1.2}
+.lbl .lp{font-family:var(--f-mono);font-weight:700;font-size:16px}
+.lbl .lq{grid-row:2/4;grid-column:2;line-height:0}
+.lbl .lq img,.lbl .lq canvas{width:58px;height:58px}
+.lbl svg{grid-column:1/-1;width:100%;height:46px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:8px;font-weight:600;z-index:60;max-width:calc(100% - 32px)}
+.demo{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--warn)}
+/* Login + admin */
+.login{padding-block:48px;padding-inline:16px;display:grid;place-items:center}
+.lcard{width:100%;max-width:430px;padding:24px;display:flex;flex-direction:column;gap:14px}
+.roles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.role{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 6px;cursor:pointer;font-weight:700;font-size:13px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.role small{font-weight:500;color:var(--muted);font-size:11px}
+.role[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.role[aria-pressed="true"] small{color:var(--accent)}
+.err{color:var(--bad);font-size:13px;min-height:18px;margin:0}
+.creds{font-size:12px;color:var(--muted);background:var(--sunk);border-radius:8px;padding:10px 12px}
+.creds b{color:var(--ink)}
+.userchip{display:flex;align-items:center;gap:8px}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
+.userchip .who{line-height:1.15;font-size:13px;font-weight:600}
+.userchip .who small{display:block;color:var(--muted);font-weight:500;font-size:11px;text-transform:capitalize}
+.drop{border:2px dashed var(--line);border-radius:var(--r);padding:22px;text-align:center;cursor:pointer;color:var(--muted)}
+.drop.over{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.drop b{color:var(--ink)}
+.stack{display:flex;flex-direction:column;gap:12px;padding:16px}
+.inline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sgrid{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr 1fr auto;gap:10px;align-items:end;padding:16px;border-bottom:1px solid var(--line)}
+@media (max-width:900px){.sgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.rolepill.admin{background:var(--accent-soft);color:var(--accent)}
+.rolepill.accountant{background:var(--warn-soft);color:var(--warn)}
+.rolepill.staff{background:var(--ok-soft);color:var(--ok)}
+.prev{max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.prev table{min-width:560px}
+code{font-family:var(--f-mono);font-size:12px;background:var(--sunk);padding:2px 5px;border-radius:4px;overflow-wrap:anywhere}
+#print{display:none}
+@media (prefers-reduced-motion:no-preference){.prod,.btn,.chip{transition:border-color .15s,background .15s}}
+@media print{
+  :root{padding:0!important}
+  body{background:#fff!important}
+  body>*:not(#print){display:none!important}
+  #print{display:block!important}
+  #print .paper{max-width:none;padding:0;font-size:11px}
+  #print .lblgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:none;overflow:visible;background:#fff;padding:0}
+  #print .lbl{break-inside:avoid}
+}
+</style>
+
+<section id="loginview" class="login" hidden>
+  <form class="panel lcard" id="loginform">
+    <div class="brand"><div class="logo">S2</div><div><b id="lg-store">Soft2Cloud Mart POS</b><small>Sign in to continue</small></div></div>
+    <div><div class="label" style="margin-bottom:6px">Sign in as</div>
+      <div class="roles" id="roles">
+        <button type="button" class="role" data-r="admin" aria-pressed="true">Admin<small>Owner, full control</small></button>
+        <button type="button" class="role" data-r="accountant" aria-pressed="false">Accountant<small>Sales &amp; closing</small></button>
+        <button type="button" class="role" data-r="staff" aria-pressed="false">Staff<small>Cashier billing</small></button>
+      </div></div>
+    <div class="field"><label class="label" for="lg-user">Username</label><input id="lg-user" autocomplete="username" autocapitalize="off" required></div>
+    <div class="field"><label class="label" for="lg-pin">Password / PIN</label><input id="lg-pin" type="password" autocomplete="current-password" required></div>
+    <button class="btn primary checkout" type="submit">Sign in</button>
+    <p class="err" id="lg-err" role="alert"></p>
+    <div class="creds" id="lg-creds" hidden></div>
+  </form>
+</section>
+
+<header class="top" id="apphead" hidden>
+  <div class="top-in">
+    <div class="brand"><div class="logo">S2</div><div><b id="hdr-name">Soft2Cloud Mart POS</b><small id="hdr-sub">Counter 1</small></div></div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-v="billing" aria-selected="true">Billing</button>
+      <button class="tab" role="tab" data-v="inventory" aria-selected="false">Inventory</button>
+      <button class="tab" role="tab" data-v="categories" aria-selected="false">Categories</button>
+      <button class="tab" role="tab" data-v="sales" aria-selected="false">Sales</button>
+      <button class="tab" role="tab" data-v="shift" aria-selected="false">Opening / Closing</button>
+      <button class="tab" role="tab" data-v="store" aria-selected="false">Store &amp; Receipt</button>
+      <button class="tab" role="tab" data-v="admin" aria-selected="false">Admin Panel</button>
+      <button class="tab" role="tab" data-v="ai" aria-selected="false">AI Controls<span class="beta">Phase 2</span></button>
+    </nav>
+    <div class="hright"><button class="pill shiftpill" id="shiftpill"></button><span class="clock num" id="clock"></span>
+      <div class="userchip"><span class="avatar" id="u-av"></span><span class="who" id="u-who"></span><button class="btn rowbtn" id="logout">Log out</button></div></div>
+  </div>
+</header>
+
+<main id="appmain" hidden>
+<!-- BILLING -->
+<section class="view" id="v-billing">
+  <div class="panel gate" id="gate" hidden>
+    <div><span class="label">Opening</span><h2>Open the counter</h2><p class="sub">Count the cash in the drawer before the first bill. Closing will compare against this.</p></div>
+    <div class="trow"><span class="label">Cashier</span><b id="g-who"></b></div>
+    <div class="field"><label class="label" for="g-cash">Opening cash in drawer (Rs)</label><input id="g-cash" type="number" min="0" value="5000" class="num"></div>
+    <button class="btn primary checkout" id="g-open">Open shift</button>
+  </div>
+  <div class="pos" id="pos">
+    <div>
+      <div class="panel scanbar">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 5v14M7 5v14M11 5v14M14 5v14M18 5v14M21 5v14"/></svg>
+        <input id="scan" aria-label="Scan or search" placeholder="Scan barcode / QR, or type name + Enter" autocomplete="off">
+        <button class="btn" id="cambtn" title="Scan with camera"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/></svg>Camera</button>
+      </div>
+      <div class="chips" id="chips"></div>
+      <div class="grid" id="grid"></div>
+    </div>
+    <aside class="panel cart">
+      <div class="cart-h"><h3>Current bill</h3><span class="num" id="billno"></span></div>
+      <div class="lines" id="lines"></div>
+      <div class="totals">
+        <div class="trow"><span>Subtotal <span class="label" id="itemcount"></span></span><span class="num" id="subtotal">Rs 0</span></div>
+        <div class="trow"><label for="disc">Discount (Rs)</label><input class="inp num" id="disc" type="number" min="0" value="0"></div>
+        <div class="trow"><span class="label">Total · GST inclusive</span><span class="grand num" id="grand">Rs 0</span></div>
+        <div class="pays" id="pays">
+          <button class="pay" data-p="Cash" aria-pressed="true">Cash</button>
+          <button class="pay" data-p="Card" aria-pressed="false">Card</button>
+          <button class="pay" data-p="Easypaisa" aria-pressed="false">Easypaisa</button>
+          <button class="pay" data-p="JazzCash" aria-pressed="false">JazzCash</button>
+        </div>
+        <div class="trow" id="cashrow"><label for="cash">Cash received</label><input class="inp num" id="cash" type="number" min="0" placeholder="0"></div>
+        <div class="trow" id="changerow"><span>Change to return</span><span class="num" id="change">Rs 0</span></div>
+        <button class="btn primary checkout" id="checkout" disabled>Complete sale</button>
+        <button class="btn" id="clearcart">Clear bill</button>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- INVENTORY -->
+<section class="view" id="v-inventory" hidden>
+  <div class="head"><div><h2>Inventory</h2><p class="sub">Add a product and it files itself into the right category. Sales and stock-outs reduce stock automatically.</p></div></div>
+  <form class="panel addform" id="addform">
+    <h3>Add stock</h3>
+    <div class="fgrid">
+      <div class="field wide"><label class="label" for="f-name">Product name</label><input id="f-name" required placeholder="e.g. Olper's Milk 1L"></div>
+      <div class="field wide"><label class="label" for="f-cat">Category</label><select id="f-cat"></select></div>
+      <div class="field"><label class="label" for="f-price">Sale price</label><input id="f-price" type="number" min="0" step="any" required></div>
+      <div class="field"><label class="label" for="f-cost">Cost price</label><input id="f-cost" type="number" min="0" step="any"></div>
+      <div class="field"><label class="label" for="f-qty">Quantity</label><input id="f-qty" type="number" min="0" step="any" required value="1"></div>
+      <div class="field"><label class="label" for="f-unit">Unit</label><select id="f-unit"><option>pcs</option><option>pack</option><option>kg</option><option>L</option><option>dozen</option></select></div>
+      <div class="field"><label class="label" for="f-sku">Barcode</label><input id="f-sku" placeholder="Scan or auto"></div>
+    </div>
+    <div class="detect" id="detect">Type a product name to see its category.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="btn primary" type="submit">Add to inventory</button>
+      <label class="label" for="f-min">Low-stock alert at</label><input class="inp num" id="f-min" type="number" min="0" value="5" style="width:80px">
+    </div>
+  </form>
+  <div class="tools">
+    <input class="inp" id="inv-q" placeholder="Search products or barcode">
+    <select class="inp" id="inv-cat"></select>
+    <select class="inp" id="inv-st"><option value="">All stock</option><option value="low">Low stock</option><option value="out">Out of stock</option></select>
+    <button class="btn" id="labelsall">Barcode labels for this list</button>
+  </div>
+  <div class="panel tablewrap"><table>
+    <thead><tr><th>Barcode</th><th>Product</th><th>Category</th><th class="r">Price</th><th class="r">Stock</th><th>Status</th><th>Stock in / out</th><th></th></tr></thead>
+    <tbody id="invbody"></tbody>
+  </table></div>
+</section>
+
+<!-- CATEGORIES -->
+<section class="view" id="v-categories" hidden>
+  <div class="head"><div><h2>Categories</h2><p class="sub">Aisle layout modelled on a cash-and-carry store. Tap a category to open its stock.</p></div></div>
+  <div class="cgrid" id="cgrid"></div>
+</section>
+
+<!-- SALES -->
+<section class="view" id="v-sales" hidden>
+  <div class="head"><div><h2>Sales today</h2><p class="sub" id="salesdate"></p></div></div>
+  <div class="kpis">
+    <div class="panel kpi"><span class="label">Sales</span><b id="k-sales">Rs 0</b></div>
+    <div class="panel kpi"><span class="label">Bills</span><b id="k-bills">0</b></div>
+    <div class="panel kpi"><span class="label">Items sold</span><b id="k-items">0</b></div>
+    <div class="panel kpi"><span class="label">Gross profit</span><b id="k-profit">Rs 0</b></div>
+  </div>
+  <div class="two">
+    <div class="panel"><div class="ph"><h3>Sales by category</h3></div><div class="bars" id="bars"></div></div>
+    <div class="panel"><div class="ph"><h3>Recent bills</h3><span class="label">Tap a bill to reprint</span></div><div class="tablewrap"><table style="min-width:480px"><thead><tr><th>Bill</th><th>Time</th><th class="r">Items</th><th>Paid by</th><th class="r">Total</th></tr></thead><tbody id="billbody"></tbody></table></div></div>
+  </div>
+  <div class="panel" style="margin-top:16px"><div class="ph"><h3>Stock movement log</h3><span class="label">Last 25</span></div><div class="tablewrap"><table style="min-width:560px"><thead><tr><th>Time</th><th>Product</th><th>Type</th><th class="r">Qty</th><th class="r">Stock after</th></tr></thead><tbody id="movebody"></tbody></table></div></div>
+</section>
+
+<!-- SHIFT -->
+<section class="view" id="v-shift" hidden>
+  <div class="head"><div><h2>Opening &amp; Closing</h2><p class="sub">Open the counter with cash in drawer, close it with a counted total. The Z-report shows short or over.</p></div></div>
+  <div id="shiftbody"></div>
+  <div class="panel" style="margin-top:16px"><div class="ph"><h3>Closed shifts</h3><span class="label">Tap to reprint Z-report</span></div><div class="tablewrap"><table style="min-width:640px"><thead><tr><th>Shift</th><th>Cashier</th><th>Opened</th><th>Closed</th><th class="r">Net sales</th><th class="r">Short / over</th></tr></thead><tbody id="shifthist"></tbody></table></div></div>
+</section>
+
+<!-- STORE -->
+<section class="view" id="v-store" hidden>
+  <div class="head"><div><h2>Store &amp; Receipt</h2><p class="sub">These details print at the top and bottom of every bill and closing report.</p></div></div>
+  <div class="store">
+    <form class="panel sform" id="storeform">
+      <div class="field"><label class="label" for="st-name">Store name</label><input id="st-name" required></div>
+      <div class="field"><label class="label" for="st-tag">Branch / tagline</label><input id="st-tag"></div>
+      <div class="field full"><label class="label" for="st-addr">Address</label><input id="st-addr"></div>
+      <div class="field"><label class="label" for="st-phone">Mobile / phone</label><input id="st-phone" inputmode="tel"></div>
+      <div class="field"><label class="label" for="st-ntn">NTN / STRN (optional)</label><input id="st-ntn"></div>
+      <div class="field full"><label class="label" for="st-policy">Return &amp; exchange policy</label><textarea id="st-policy" rows="4"></textarea></div>
+      <div class="field full"><label class="label" for="st-foot">Thank-you line</label><input id="st-foot"></div>
+      <div class="full" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn primary" type="submit">Save store details</button><span class="sub" style="font-size:12px">Example details are filled in. Replace them with the real store.</span></div>
+    </form>
+    <div><div class="label" style="margin-bottom:6px">Receipt preview</div><div class="panel" style="overflow:hidden" id="preview"></div></div>
+  </div>
+</section>
+
+<!-- ADMIN -->
+<section class="view" id="v-admin" hidden>
+  <div class="head"><div><h2>Admin Panel</h2><p class="sub">Staff logins, data upload, backup and activity. Only Admin can open this page.</p></div></div>
+  <div class="panel">
+    <div class="ph"><h3>Staff &amp; logins</h3><span class="label" id="staffcount"></span></div>
+    <form class="sgrid" id="staffform">
+      <div class="field"><label class="label" for="sf-name">Full name</label><input id="sf-name" required placeholder="e.g. Bilal Khan"></div>
+      <div class="field"><label class="label" for="sf-user">Username</label><input id="sf-user" required autocapitalize="off" placeholder="bilal"></div>
+      <div class="field"><label class="label" for="sf-role">Role</label><select id="sf-role"><option value="staff">Staff / Cashier</option><option value="accountant">Accountant</option><option value="admin">Admin</option></select></div>
+      <div class="field"><label class="label" for="sf-pin">Password / PIN</label><input id="sf-pin" required minlength="4" type="password" autocomplete="new-password"></div>
+      <div class="field"><label class="label" for="sf-phone">Mobile</label><input id="sf-phone" inputmode="tel"></div>
+      <button class="btn primary" type="submit">Add staff</button>
+    </form>
+    <div class="tablewrap"><table style="min-width:880px"><thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Mobile</th><th>Status</th><th>Last login</th><th>Actions</th></tr></thead><tbody id="staffbody"></tbody></table></div>
+  </div>
+  <div class="two" style="margin-top:16px">
+    <div class="panel">
+      <div class="ph"><h3>Upload data</h3><select class="inp" id="imp-kind" style="width:auto"><option value="products">Products / stock</option><option value="staff">Staff list</option></select></div>
+      <div class="stack">
+        <label class="drop" id="drop" for="imp-file"><b>Choose a CSV or Excel file</b><br>or drag it here<input id="imp-file" type="file" accept=".csv,.txt,.xlsx,.xls" hidden></label>
+        <div class="sub" style="font-size:12px" id="imp-help"></div>
+        <div class="inline"><button class="btn rowbtn" id="tpl-copy" type="button">Copy column headings</button><button class="btn rowbtn" id="tpl-dl" type="button">Download sample file</button></div>
+        <div id="imp-prev"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ph"><h3>Backup &amp; reset</h3></div>
+      <div class="stack">
+        <p class="sub" style="margin:0">All data lives on this computer's browser. Take a backup at closing time and keep it on a USB or Google Drive.</p>
+        <div class="inline"><button class="btn" id="bk-dl" type="button">Download backup</button><label class="btn" for="bk-file">Restore from backup</label><input id="bk-file" type="file" accept=".json" hidden></div>
+        <p class="sub" id="bk-msg" style="font-size:12px;margin:0"></p>
+        <div class="inline"><button class="btn danger" id="reset" type="button">Reset demo data</button><span class="sub" id="resetmsg" style="font-size:12px"></span></div>
+      </div>
+      <div class="ph" style="border-top:1px solid var(--line)"><h3>Activity log</h3><span class="label">Last 40</span></div>
+      <div class="tablewrap"><table style="min-width:420px"><thead><tr><th>Time</th><th>Who</th><th>What</th></tr></thead><tbody id="auditbody"></tbody></table></div>
+    </div>
+  </div>
+</section>
+
+<!-- AI -->
+<section class="view" id="v-ai" hidden>
+  <div class="head"><div><h2>AI Controls</h2><p class="sub">Phase 1 runs on a built-in rule engine. The AI model plugs into these same hooks in Phase 2.</p></div></div>
+  <div class="ai">
+    <div class="panel phase">
+      <h3>Roadmap</h3>
+      <div class="feat"><span class="pill ok st">Live</span><b>Auto category on add</b><p>Rule engine reads the product name and files it into one of 18 aisles. AI will handle names it has never seen.</p></div>
+      <div class="feat"><span class="pill ok st">Live</span><b>Auto stock remaining</b><p>Every sale, stock-in and stock-out updates the count and writes to the movement log.</p></div>
+      <div class="feat"><span class="pill ok st">Live</span><b>Barcode and QR scanning</b><p>USB scanner, phone camera, printable shelf labels, and a QR on every bill for reprints and returns.</p></div>
+      <div class="feat"><span class="pill auto st">Phase 2</span><b>Reorder prediction</b><p>Forecast when each item runs out from its sales speed and suggest order quantities.</p></div>
+      <div class="feat"><span class="pill auto st">Phase 2</span><b>Photo and voice add</b><p>Snap a product or say its name; AI fills name, category and barcode.</p></div>
+      <div class="feat"><span class="pill auto st">Phase 2</span><b>Expiry and price watch</b><p>Warn on near-expiry batches and suggest discounts to clear them.</p></div>
+      <div class="feat"><span class="pill auto st">Phase 2</span><b>Owner assistant</b><p>Ask "kal kitni sale hui?" or "kya khatam ho raha hai?" and get answers from the store data.</p></div>
+    </div>
+    <div class="panel tester">
+      <h3>Try the category engine</h3>
+      <label class="label" for="t-in">Product name</label>
+      <input class="inp" id="t-in" value="Nurpur Salted Butter 200g">
+      <div class="result" id="t-out"></div>
+      <p class="sub" style="font-size:12px">Uses keywords in English and Roman Urdu (doodh, chawal, anday, sabzi). Unknown names go to General / Unsorted.</p>
+    </div>
+  </div>
+</section>
+</main>
+
+<div class="overlay" id="overlay" hidden><div class="dialog" role="dialog" aria-modal="true" id="dialog"></div></div>
+<div class="toast" id="toast" hidden></div>
+<div id="print"></div>
+
+<script>
+const CATS=[
+{id:'fresh',name:'Fruits & Vegetables',aisle:'01',kw:['apple','banana','mango','orange','tomato','potato','onion','garlic','ginger','lemon','carrot','cucumber','spinach','palak','aloo','pyaz','tamatar','sabzi','fruit','grapes','guava','peas','cabbage','cauliflower','green chilli','kinnow','melon','watermelon','lettuce','capsicum','vegetable']},
+{id:'meat',name:'Meat, Poultry & Fish',aisle:'02',kw:['chicken','mutton','beef','fish','keema','qeema','boneless','prawn','gosht','drumstick','breast','lamb']},
+{id:'dairy',name:'Dairy & Eggs',aisle:'03',kw:['milk','doodh','yogurt','yoghurt','dahi','cheese','butter','cream','egg','anday','olpers','milkpak','nurpur','haleeb','lassi','paneer','tarang','dairy omung']},
+{id:'bakery',name:'Bakery & Bread',aisle:'04',kw:['bread','bun','rusk','cake','croissant','naan','dawn','pastry','muffin','toast','bakery']},
+{id:'staples',name:'Atta, Rice & Daal',aisle:'05',kw:['atta','flour','maida','rice','chawal','basmati','daal','dal','lentil','chana','besan','sugar','cheeni','salt','namak','sooji','suji','oats']},
+{id:'oil',name:'Cooking Oil & Ghee',aisle:'06',kw:['oil','ghee','dalda','sufi','habib','canola','sunflower','olive','banaspati','eva']},
+{id:'spices',name:'Spices, Sauces & Spreads',aisle:'07',kw:['masala','shan','national','mirch','haldi','turmeric','cumin','zeera','spice','garam','pepper','ketchup','sauce','mayo','mayonnaise','jam','fruit jam','honey','pickle','achar','vinegar','biryani mix']},
+{id:'bev',name:'Beverages',aisle:'08',kw:['tea','chai','tapal','lipton','coffee','nescafe','juice','shezan','pepsi','coke','cola','coca cola','sprite','7up','water','drink','rooh afza','tang','nestle pure life','energy drink','sting']},
+{id:'snacks',name:'Snacks & Confectionery',aisle:'09',kw:['chips','lays','kurkure','biscuit','cookie','sooper','chocolate','candy','toffee','nimko','slanty','wafer','dairy milk','peek freans','lu','prince','candi','popcorn']},
+{id:'frozen',name:'Frozen Foods',aisle:'10',kw:['frozen','nugget','k&n','k&n\'s','samosa','kabab','ice cream','fries','sausage','paratha frozen','cornetto','walls']},
+{id:'personal',name:'Personal Care',aisle:'11',kw:['soap','shampoo','toothpaste','colgate','lifebuoy','safeguard','lux','sunsilk','head & shoulders','face wash','lotion','deodorant','razor','gillette','pepsodent','conditioner','perfume','body spray','toothbrush','hair oil','sanitary']},
+{id:'house',name:'Household & Cleaning',aisle:'12',kw:['surf','surf excel','ariel','detergent','bonus','harpic','dettol','dishwash','vim','lemon max','bleach','phenyl','tissue','broom','mop','air freshener','garbage bag','max','mortein','finis','scrubber']},
+{id:'baby',name:'Baby Care',aisle:'13',kw:['pampers','diaper','baby','cerelac','nido','feeder','wipes','molfix']},
+{id:'kitchen',name:'Home & Kitchen',aisle:'14',kw:['plate','glass','pot','pan','knife','container','foil','cling','crockery','spoon','jug','lunch box','tray']},
+{id:'elec',name:'Electronics & Appliances',aisle:'15',kw:['bulb','led','battery','charger','cable','iron','kettle','fan','extension','earphone','blender','juicer','toaster','torch']},
+{id:'stat',name:'Stationery & Books',aisle:'16',kw:['pen','pencil','notebook','register','eraser','marker','glue','paper','a4','sharpener','stapler','book']},
+{id:'health',name:'Health & Pharmacy',aisle:'17',kw:['panadol','disprin','bandage','ors','vitamin','sanitizer','mask','thermometer','syrup','tablet','brufen']},
+{id:'pet',name:'Pet Care',aisle:'18',kw:['cat food','dog food','whiskas','pedigree','litter','pet']},
+];
+const GENERAL={id:'general',name:'General / Unsorted',aisle:'99',kw:[]};
+function esc(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
+const RX={};CATS.forEach(c=>{RX[c.id]=c.kw.map(k=>({k,re:new RegExp('(^|[^a-z0-9])'+esc(k)+'(s|es)?(?=$|[^a-z0-9])')}))});
+function detectCategory(name){const n=(' '+String(name||'').toLowerCase()+' ');let best=null;
+ for(const c of CATS){let score=0,hits=[];for(const {k,re} of RX[c.id]){if(re.test(n)){score+=k.length;hits.push(k)}}
+  if(score>0&&(!best||score>best.score))best={id:c.id,score,hits}}
+ return best||{id:'general',score:0,hits:[]}}
+
+const ALLCATS=[...CATS,GENERAL];
+const catById=id=>ALLCATS.find(c=>c.id===id)||GENERAL;
+const KEY='s2c_mart_pos_v1';
+const $=s=>document.querySelector(s);
+const h=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rs=n=>'Rs '+Math.round(n).toLocaleString('en-PK');
+const fmtQ=n=>Number.isInteger(n)?n:(+n).toFixed(2);
+const billId=n=>'S2C-'+String(n).padStart(6,'0');
+const dt=ts=>new Date(ts).toLocaleString('en-PK',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+let inFrame;try{inFrame=window.self!==window.top}catch(e){inFrame=true}
+const canPrint=!inFrame;
+
+const DEFAULT_STORE={name:'Soft2Cloud Mart',tag:'Gulberg Branch · Counter 1',addr:'Shop 12, Main Market, Gulberg III, Lahore',phone:'0300-1234567',ntn:'',
+  policy:'Exchange within 7 days with this receipt.\nItems must be unused and in original packing.\nFresh, frozen, dairy and meat items cannot be returned.\nNo cash refund on discounted items.',foot:'Thank you for shopping with us!'};
+
+const SEED=[
+["Olper's Full Cream Milk 1L",330,290,48,'pcs'],["Nestle Milkpak 1L",320,285,36,'pcs'],["Farm Fresh Eggs",390,340,20,'dozen'],["Nurpur Butter 200g",620,550,4,'pcs'],
+["Dawn Bread Large",190,160,25,'pcs'],["Tapal Danedar Tea 950g",1790,1610,18,'pcs'],["Lipton Yellow Label 190g",690,610,22,'pcs'],["Pepsi 1.5L",210,180,60,'pcs'],
+["Coca Cola 1.5L",210,180,3,'pcs'],["Nestle Pure Life Water 1.5L",110,85,90,'pcs'],["Shezan Mango Juice 1L",290,250,24,'pcs'],["Dalda Cooking Oil 5L",3150,2900,12,'pcs'],
+["Sufi Canola Oil 1L",640,590,30,'pcs'],["Shan Biryani Masala",140,118,55,'pcs'],["National Lal Mirch Powder 200g",310,270,40,'pcs'],["Mitchell's Mixed Fruit Jam",560,490,14,'pcs'],
+["Guard Basmati Rice 5kg",2650,2400,16,'pcs'],["Chakki Atta 10kg",1250,1150,28,'pcs'],["Sugar",165,150,120,'kg'],["Daal Chana",310,270,45,'kg'],
+["Lays Masala Chips",100,82,70,'pcs'],["Kurkure Chutney Chaska",50,40,0,'pcs'],["Peek Freans Sooper Biscuit",60,50,80,'pcs'],["Cadbury Dairy Milk 50g",250,215,35,'pcs'],
+["K&N's Chicken Nuggets 1kg",1650,1480,10,'pcs'],["Walls Cornetto Ice Cream",180,150,40,'pcs'],["Chicken Boneless",1150,1020,22,'kg'],["Bananas",180,140,15,'dozen'],
+["Tomatoes",160,120,40,'kg'],["Potatoes",90,65,80,'kg'],["Onions",130,100,2,'kg'],["Lifebuoy Soap",130,110,64,'pcs'],
+["Colgate Toothpaste 150g",360,315,30,'pcs'],["Sunsilk Shampoo 360ml",890,790,18,'pcs'],["Surf Excel 1kg",780,700,26,'pcs'],["Harpic Toilet Cleaner 500ml",420,370,20,'pcs'],
+["Lemon Max Dishwash Bar",85,70,50,'pcs'],["Pampers Baby Dry M",2450,2200,9,'pack'],["Philips LED Bulb 12W",450,380,25,'pcs'],["Panadol Tablets",40,32,100,'pack'],
+["Whiskas Cat Food 480g",1100,980,6,'pcs'],["Dollar Ball Pen",30,22,120,'pcs'],["Steel Lunch Box",1250,1050,8,'pcs'],["Rose Petal Tissue Box",260,220,33,'pcs']
+];
+function seed(){
+  const now=Date.now();let n=890001;
+  const products=SEED.map(([name,price,cost,stock,unit],i)=>({id:'p'+(i+1),sku:String(n++),name,cat:detectCategory(name).id,price,cost,stock,unit,min:5}));
+  const st={products,sales:[],moves:[],seq:1041,nextP:SEED.length+1,store:{...DEFAULT_STORE},shift:{id:1,cashier:'Ahmed (demo)',openedAt:now-4*3600e3,opening:5000,demo:true},shifts:[],shiftSeq:2};
+  const demo=[[[0,2],[7,1],[20,3]],[[17,1],[18,2],[5,1]],[[31,4],[34,1],[39,2]]];
+  demo.forEach((lines,i)=>{const items=lines.map(([pi,q])=>{const p=products[pi];p.stock-=q;return{id:p.id,name:p.name,cat:p.cat,qty:q,price:p.price,cost:p.cost}});
+    const total=items.reduce((s,x)=>s+x.qty*x.price,0);const ts=now-(3-i)*3600e3;const pay=['Cash','Easypaisa','Card'][i];
+    st.sales.push({no:st.seq++,ts,items,sub:total,disc:0,total,pay,cash:pay==='Cash'?Math.ceil(total/500)*500:null,shiftId:1,cashier:'Ahmed (demo)',demo:true});
+    items.forEach(x=>st.moves.push({ts,name:x.name,type:'Sale',qty:-x.qty,after:products.find(p=>p.id===x.id).stock}));});
+  return st;
+}
+function load(){try{const s=localStorage.getItem(KEY);return s?JSON.parse(s):null}catch(e){return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+let S=load()||seed();
+// upgrade data saved by the first version
+if(!S.store)S.store={...DEFAULT_STORE};if(S.shift===undefined)S.shift=null;if(!S.shifts)S.shifts=[];if(!S.shiftSeq)S.shiftSeq=1;if(!S.audit)S.audit=[];
+let cart=[],pay='Cash',fCat='all',manualCat=false,cam=null,ME=null;
+const ACCESS={admin:['billing','inventory','categories','sales','shift','store','admin','ai'],accountant:['sales','shift','inventory','categories'],staff:['billing','shift']};
+const HOME={admin:'billing',accountant:'sales',staff:'billing'};
+const ROLE_NAME={admin:'Admin',accountant:'Accountant',staff:'Staff / Cashier'};
+const can=v=>!!ME&&ACCESS[ME.role].includes(v);
+function audit(what){S.audit.push({ts:Date.now(),who:ME?ME.name:'—',what});if(S.audit.length>300)S.audit.splice(0,S.audit.length-300)}
+
+function status(p){if(p.stock<=0)return['bad','Out of stock'];if(p.stock<=p.min)return['warn','Low · '+fmtQ(p.stock)];return['ok','In stock']}
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2600)}
+function curView(){return(document.querySelector('.tab[aria-selected="true"]')||{dataset:{v:'billing'}}).dataset.v}
+
+/* tabs */
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>show(b.dataset.v));
+function show(v){if(!ME)return;if(!can(v))v=HOME[ME.role];document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.hidden=s.id!=='v-'+v);render();if(v==='billing'&&S.shift)$('#scan').focus()}
+function tick(){$('#clock').textContent=new Date().toLocaleString('en-PK',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
+tick();setInterval(tick,30000);
+function renderHeader(){$('#hdr-name').textContent=S.store.name||'Store';$('#hdr-sub').textContent=S.store.tag||'';
+  if(ME){$('#u-av').textContent=ME.name.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();$('#u-who').innerHTML=`${h(ME.name)}<small>${ROLE_NAME[ME.role]}</small>`;
+    document.querySelectorAll('.tab').forEach(t=>t.hidden=!can(t.dataset.v))}
+  const p=$('#shiftpill');if(S.shift){p.className='pill ok shiftpill';p.textContent='Shift open · '+S.shift.cashier}else{p.className='pill warn shiftpill';p.textContent='Shift closed'}}
+$('#shiftpill').onclick=()=>show('shift');
+
+/* QR + barcode helpers */
+function renderQRs(root){root.querySelectorAll('[data-qr]').forEach(el=>{if(el.dataset.done)return;el.dataset.done=1;const size=+el.dataset.size||104;
+  if(typeof QRCode==='undefined'){el.textContent=el.dataset.qr;el.style.lineHeight='1.3';el.style.fontSize='9px';return}
+  try{new QRCode(el,{text:el.dataset.qr,width:size*2,height:size*2,correctLevel:QRCode.CorrectLevel.M})}catch(e){el.textContent=el.dataset.qr}})}
+function renderBarcodes(root){root.querySelectorAll('svg[data-bc]').forEach(el=>{if(el.dataset.done)return;el.dataset.done=1;
+  if(typeof JsBarcode==='undefined'){el.outerHTML=`<div style="grid-column:1/-1;font-family:monospace">${h(el.dataset.bc)}</div>`;return}
+  try{JsBarcode(el,el.dataset.bc,{format:'CODE128',height:40,width:1.6,fontSize:11,margin:0,lineColor:'#111',background:'transparent'})}catch(e){}})}
+
+/* printing */
+function doPrint(html,size){$('#pg').textContent=size==='a4'?'@page{size:A4;margin:8mm}':'@page{size:80mm auto;margin:2mm}';$('#print').innerHTML=html;setTimeout(()=>{try{window.print()}catch(e){}},60)}
+function printBtn(id){return canPrint?`<button class="btn primary" id="${id}">Print</button>`:`<span class="noprint-note">Printing works in the installed POS file.</span>`}
+
+/* dialog */
+function openDialog(html,wide){const d=$('#dialog');d.className='dialog'+(wide?' wide':'');d.innerHTML=html;$('#overlay').hidden=false;renderQRs(d);renderBarcodes(d);const f=d.querySelector('[data-focus]');if(f)f.focus()}
+function closeDialog(){stopCam();$('#overlay').hidden=true;if(curView()==='billing'&&S.shift)$('#scan').focus()}
+$('#overlay').onclick=e=>{if(e.target.id==='overlay')closeDialog()};
+
+/* receipt paper */
+function storeHead(){const s=S.store;return`<div class="c"><div class="sname">${h(s.name)}</div>${s.tag?`<div>${h(s.tag)}</div>`:''}${s.addr?`<div>${h(s.addr)}</div>`:''}${s.phone?`<div>Ph: ${h(s.phone)}</div>`:''}${s.ntn?`<div>NTN: ${h(s.ntn)}</div>`:''}</div>`}
+function billQR(s){return`S2C-BILL:${s.no}|${S.store.name}|${new Date(s.ts).toISOString().slice(0,16).replace('T',' ')}|Rs ${Math.round(s.total)}`}
+function receiptPaper(s,dup){const d=new Date(s.ts);const items=s.items.reduce((a,i)=>a+i.qty,0);
+  return`<div class="paper">${storeHead()}<hr>
+  <div class="c"><b>SALES RECEIPT</b>${dup?'<div><span class="tag">DUPLICATE COPY</span></div>':''}</div>
+  <div class="rr"><span>Bill</span><span>${billId(s.no)}</span></div>
+  <div class="rr"><span>Date</span><span>${d.toLocaleDateString('en-PK')} ${d.toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'})}</span></div>
+  <div class="rr"><span>Cashier</span><span>${h(s.cashier||'—')}</span></div><hr>
+  ${s.items.map(i=>`<div>${h(i.name)}</div><div class="rr"><span>${fmtQ(i.qty)} × ${Math.round(i.price).toLocaleString('en-PK')}</span><span>${Math.round(i.qty*i.price).toLocaleString('en-PK')}</span></div>`).join('')}<hr>
+  <div class="rr"><span>Items</span><span>${fmtQ(+items.toFixed(2))}</span></div>
+  <div class="rr"><span>Subtotal</span><span>${rs(s.sub)}</span></div>${s.disc?`<div class="rr"><span>Discount</span><span>-${rs(s.disc)}</span></div>`:''}
+  <div class="rr big"><span>TOTAL</span><span>${rs(s.total)}</span></div>
+  <div class="rr"><span>Paid by</span><span>${h(s.pay)}</span></div>
+  ${s.cash!=null?`<div class="rr"><span>Cash received</span><span>${rs(s.cash)}</span></div><div class="rr"><span>Change</span><span>${rs(Math.max(s.cash-s.total,0))}</span></div>`:''}
+  <div class="c" style="margin-top:4px">Prices include GST</div><hr>
+  ${S.store.policy?`<div><b>Return &amp; exchange policy</b></div><div class="policy">${h(S.store.policy)}</div>`:''}
+  <div class="qrwrap"><div class="qrbox" data-qr="${h(billQR(s))}"></div><div style="font-size:10px">Scan for returns · ${billId(s.no)}</div></div><hr>
+  <div class="c">${h(S.store.foot||'')}</div><div class="c" style="font-size:9.5px;margin-top:6px">Software by Soft2Cloud</div></div>`}
+function showReceipt(s,dup){openDialog(receiptPaper(s,dup)+`<div class="dactions">${printBtn('rprint')}<button class="btn${canPrint?'':' primary'}" id="rnew" data-focus>${dup?'Close':'New bill'}</button></div>`);
+  const p=$('#rprint');if(p)p.onclick=()=>doPrint($('#dialog .paper').outerHTML,'80');$('#rnew').onclick=closeDialog}
+
+/* BILLING */
+function renderChips(){const counts={};S.products.forEach(p=>counts[p.cat]=(counts[p.cat]||0)+1);
+  const list=[{id:'all',name:'All',n:S.products.length},...ALLCATS.filter(c=>counts[c.id]).map(c=>({id:c.id,name:c.name,n:counts[c.id]}))];
+  $('#chips').innerHTML=list.map(c=>`<button class="chip" data-c="${c.id}" aria-pressed="${fCat===c.id}">${h(c.name)}<span class="n">${c.n}</span></button>`).join('');
+  $('#chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{fCat=b.dataset.c;renderBilling()})}
+function matches(p,q){q=q.trim().toLowerCase();return!q||p.name.toLowerCase().includes(q)||p.sku===q}
+function renderGrid(){const q=$('#scan').value;const list=S.products.filter(p=>(fCat==='all'||p.cat===fCat)&&matches(p,q));
+  $('#grid').innerHTML=list.length?list.map(p=>{const[c,t]=status(p);const inCart=cart.find(l=>l.id===p.id);const left=p.stock-(inCart?inCart.qty:0);
+    return`<button class="prod" data-id="${p.id}" ${left<=0?'disabled':''}><span class="aisle">${h(p.sku)} · Aisle ${catById(p.cat).aisle}</span><span class="nm">${h(p.name)}</span><span class="row"><span class="pr">${rs(p.price)}<small style="color:var(--muted);font-weight:400">/${p.unit}</small></span><span class="pill ${c}">${c==='ok'?fmtQ(p.stock)+' left':t}</span></span></button>`}).join('')
+    :`<div class="empty" style="grid-column:1/-1">No product matches "${h(q)}". Add it from Inventory.</div>`;
+  $('#grid').querySelectorAll('.prod').forEach(b=>b.onclick=()=>addToCart(b.dataset.id))}
+function addToCart(id){if(!S.shift){toast('Open the shift first');return}const p=S.products.find(x=>x.id===id);if(!p)return;const l=cart.find(x=>x.id===id);const have=l?l.qty:0;
+  if(have+1>p.stock){toast(`Only ${fmtQ(p.stock)} ${p.unit} of ${p.name} in stock`);return}
+  if(l)l.qty++;else cart.push({id,qty:1});toast(`${p.name} added`);renderBilling()}
+function renderCart(){const lines=cart.map(l=>({...l,p:S.products.find(x=>x.id===l.id)})).filter(l=>l.p);
+  $('#lines').innerHTML=lines.length?lines.map(l=>`<div class="line"><span class="nm">${h(l.p.name)}</span><div class="qty"><button data-a="-" data-id="${l.id}" aria-label="Less">−</button><span class="num">${fmtQ(l.qty)}</span><button data-a="+" data-id="${l.id}" aria-label="More">+</button></div><span class="amt num">${rs(l.qty*l.p.price)}</span><span class="meta num">${rs(l.p.price)} / ${l.p.unit}</span><button class="x" data-a="x" data-id="${l.id}">Remove</button></div>`).join('')
+    :`<div class="empty" style="margin:16px">Scan a barcode or tap a product to start the bill.</div>`;
+  $('#lines').querySelectorAll('button').forEach(b=>b.onclick=()=>{const l=cart.find(x=>x.id===b.dataset.id);const p=S.products.find(x=>x.id===b.dataset.id);
+    if(b.dataset.a==='+'){if(l.qty+1>p.stock)return toast('No more stock for this item');l.qty++}
+    else if(b.dataset.a==='-'){l.qty--;if(l.qty<=0)cart=cart.filter(x=>x!==l)}else cart=cart.filter(x=>x!==l);renderBilling()});
+  const sub=lines.reduce((s,l)=>s+l.qty*l.p.price,0);const disc=Math.min(Math.max(+$('#disc').value||0,0),sub);const total=sub-disc;
+  $('#subtotal').textContent=rs(sub);$('#grand').textContent=rs(total);$('#itemcount').textContent=lines.length?`· ${lines.reduce((s,l)=>s+l.qty,0)} items`:'';
+  const cash=+$('#cash').value||0;const isCash=pay==='Cash';$('#cashrow').hidden=!isCash;$('#changerow').hidden=!isCash;
+  $('#change').textContent=rs(Math.max(cash-total,0));
+  $('#checkout').disabled=!lines.length||(isCash&&cash>0&&cash<total);
+  $('#billno').textContent='Bill #'+billId(S.seq);
+  return{lines,sub,disc,total}}
+function renderBilling(){if(ME)$('#g-who').textContent=ME.name;$('#gate').hidden=!!S.shift;$('#pos').hidden=!S.shift;if(!S.shift)return;renderChips();renderGrid();renderCart()}
+
+/* scanning: USB scanner, typed search, camera — all go through handleCode */
+function findBill(code){const m=code.match(/^S2C-BILL:(\d+)/i)||code.match(/^S2C-0*(\d+)$/i);return m?S.sales.find(s=>s.no===+m[1]):null}
+function handleCode(raw){const code=String(raw).trim();if(!code)return;
+  const bill=findBill(code);if(bill){showReceipt(bill,true);return}
+  const exact=S.products.find(p=>p.sku===code);
+  if(curView()!=='billing')show('billing');
+  if(exact){addToCart(exact.id);$('#scan').value='';renderGrid();return}
+  const list=S.products.filter(p=>matches(p,code));if(list.length===1){addToCart(list[0].id);$('#scan').value='';renderGrid();return}
+  $('#scan').value=code;renderGrid();toast(list.length?`${list.length} matches, tap one`:`Code ${code} not found in inventory`)}
+$('#scan').addEventListener('input',renderGrid);
+$('#scan').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();handleCode($('#scan').value)}});
+// a USB/Bluetooth scanner types fast and ends with Enter; catch it even when no box is focused
+let buf='',lastKey=0;
+document.addEventListener('keydown',e=>{const t=e.target;if(!ME)return;if(/INPUT|TEXTAREA|SELECT/.test(t.tagName)||!$('#overlay').hidden&&e.key!=='Escape')return;
+  if(e.key==='Escape'){if(!$('#overlay').hidden)closeDialog();return}
+  const now=Date.now();if(now-lastKey>80)buf='';lastKey=now;
+  if(e.key==='Enter'){if(buf.length>=4){e.preventDefault();handleCode(buf)}buf='';return}
+  if(e.key.length===1)buf+=e.key});
+
+function openCamera(){openDialog(`<div class="sheet-h"><h3>Scan barcode or QR</h3><button class="btn" id="camclose" data-focus>Close</button></div><div id="reader"></div><p class="camerr" id="camerr">Point the camera at a product barcode, a shelf label QR, or a bill QR.</p>`,false);
+  $('#camclose').onclick=closeDialog;
+  const fail=m=>{$('#camerr').textContent=m;$('#reader').hidden=true};
+  if(typeof Html5Qrcode==='undefined')return fail('Camera scanner could not load. Use a USB scanner or type the code.');
+  try{cam=new Html5Qrcode('reader');
+    cam.start({facingMode:'environment'},{fps:10,qrbox:{width:240,height:150}},txt=>{const c=txt;closeDialog();handleCode(c)},()=>{})
+      .catch(()=>{cam=null;fail(inFrame?'Camera is blocked inside this preview. It works in the installed POS file on a phone or laptop. A USB barcode scanner works here.':'Camera permission was denied. Allow camera access in the browser, or use a USB scanner.')})}
+  catch(e){fail('Camera could not start on this device.')}}
+function stopCam(){if(cam){const c=cam;cam=null;c.stop().catch(()=>{}).finally(()=>{try{c.clear()}catch(e){}})}}
+$('#cambtn').onclick=openCamera;
+
+$('#disc').oninput=renderCart;$('#cash').oninput=renderCart;
+$('#pays').querySelectorAll('.pay').forEach(b=>b.onclick=()=>{pay=b.dataset.p;$('#pays').querySelectorAll('.pay').forEach(x=>x.setAttribute('aria-pressed',x===b));renderCart()});
+$('#clearcart').onclick=()=>{cart=[];$('#disc').value=0;$('#cash').value='';renderBilling()};
+$('#checkout').onclick=()=>{if(!S.shift)return;const{lines,sub,disc,total}=renderCart();if(!lines.length)return;const ts=Date.now();
+  const items=lines.map(l=>{l.p.stock=+(l.p.stock-l.qty).toFixed(3);S.moves.push({ts,name:l.p.name,type:'Sale',qty:-l.qty,after:l.p.stock});return{id:l.id,name:l.p.name,cat:l.p.cat,qty:l.qty,price:l.p.price,cost:l.p.cost||0}});
+  const cash=+$('#cash').value||0;const sale={no:S.seq++,ts,items,sub,disc,total,pay,cash:pay==='Cash'?(cash||total):null,shiftId:S.shift.id,cashier:ME?ME.name:S.shift.cashier,staffId:ME&&ME.id};S.sales.push(sale);save();
+  cart=[];$('#disc').value=0;$('#cash').value='';renderBilling();showReceipt(sale,false)};
+$('#g-open').onclick=()=>{if(!ME)return;
+  S.shift={id:S.shiftSeq++,cashier:ME.name,staffId:ME.id,openedAt:Date.now(),opening:+$('#g-cash').value||0};audit(`Opened shift #${S.shift.id} with ${rs(S.shift.opening)}`);save();toast('Shift opened. Ready for billing');renderHeader();render();$('#scan').focus()};
+
+/* INVENTORY */
+const catOpts=ALLCATS.map(c=>`<option value="${c.id}">${c.aisle} · ${h(c.name)}</option>`).join('');
+$('#f-cat').innerHTML=catOpts;$('#inv-cat').innerHTML='<option value="">All categories</option>'+catOpts;
+function runDetect(){const n=$('#f-name').value;const d=detectCategory(n);
+  if(!n.trim()){$('#detect').textContent='Type a product name to see its category.';manualCat=false;return}
+  const existing=S.products.find(p=>p.name.toLowerCase()===n.trim().toLowerCase());
+  if(!manualCat)$('#f-cat').value=existing?existing.cat:d.id;
+  const c=catById($('#f-cat').value);
+  $('#detect').innerHTML=existing?`<span class="pill warn">Already in stock</span> Quantity will be added to ${h(existing.name)} (now ${fmtQ(existing.stock)} ${existing.unit}).`
+    :manualCat?`<span class="pill">Set by you</span> ${h(c.name)}`:d.score?`<span class="pill auto">Auto</span> ${h(c.name)} · matched “${h(d.hits.join('”, “'))}”`:`<span class="pill warn">Not sure</span> Filed under General. Pick a category if you know it.`;
+  if(existing&&!$('#f-price').value){$('#f-price').value=existing.price;$('#f-cost').value=existing.cost||'';$('#f-unit').value=existing.unit}}
+$('#f-name').oninput=runDetect;$('#f-cat').onchange=()=>{manualCat=true;runDetect()};
+$('#f-sku').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const p=S.products.find(x=>x.sku===$('#f-sku').value.trim());if(p){$('#f-name').value=p.name;runDetect()}$('#f-qty').focus()}});
+$('#addform').onsubmit=e=>{e.preventDefault();const name=$('#f-name').value.trim();const qty=+$('#f-qty').value||0;if(!name)return;
+  const ex=S.products.find(p=>p.name.toLowerCase()===name.toLowerCase());const ts=Date.now();
+  if(ex){ex.stock=+(ex.stock+qty).toFixed(3);ex.price=+$('#f-price').value||ex.price;ex.cost=+$('#f-cost').value||ex.cost;ex.cat=$('#f-cat').value;
+    S.moves.push({ts,name:ex.name,type:'Stock in',qty,after:ex.stock});toast(`${fmtQ(qty)} added to ${ex.name} · now ${fmtQ(ex.stock)}`)}
+  else{let sku=$('#f-sku').value.trim();if(!sku||S.products.some(p=>p.sku===sku)){let n=890001+S.nextP*7;while(S.products.some(p=>p.sku===String(n)))n++;sku=String(n)}
+    const p={id:'p'+(S.nextP++),sku,name,cat:$('#f-cat').value,price:+$('#f-price').value||0,cost:+$('#f-cost').value||0,stock:qty,unit:$('#f-unit').value,min:+$('#f-min').value||0};
+    S.products.unshift(p);S.moves.push({ts,name,type:'New item',qty,after:qty});toast(`${name} added to ${catById(p.cat).name}`)}
+  save();e.target.reset();$('#f-qty').value=1;$('#f-min').value=5;manualCat=false;runDetect();renderInv();$('#f-name').focus()};
+let delArm=null;
+function invList(){const q=$('#inv-q').value.trim().toLowerCase(),c=$('#inv-cat').value,st=$('#inv-st').value;
+  return S.products.filter(p=>(!q||p.name.toLowerCase().includes(q)||p.sku.includes(q))&&(!c||p.cat===c)&&(!st||(st==='out'?p.stock<=0:p.stock>0&&p.stock<=p.min)))}
+function renderInv(){const list=invList();const edit=ME&&ME.role==='admin';$('#addform').hidden=!edit;$('#labelsall').hidden=!edit;
+  document.querySelectorAll('#v-inventory thead th:nth-child(n+7)').forEach(th=>th.hidden=!edit);
+  if(!edit){$('#invbody').innerHTML=list.length?list.map(p=>{const[k,t]=status(p);const cat=catById(p.cat);return`<tr><td class="num">${h(p.sku)}</td><td><b>${h(p.name)}</b></td><td><span class="aisle">${cat.aisle}</span> ${h(cat.name)}</td><td class="r num">${rs(p.price)}</td><td class="r num">${fmtQ(p.stock)} ${p.unit}</td><td><span class="pill ${k}">${t}</span></td></tr>`}).join(''):`<tr><td colspan="6"><div class="empty">No products match.</div></td></tr>`;return}
+  $('#invbody').innerHTML=list.length?list.map(p=>{const[k,t]=status(p);const cat=catById(p.cat);
+    return`<tr><td class="num">${h(p.sku)}</td><td><b>${h(p.name)}</b></td><td><span class="aisle">${cat.aisle}</span> ${h(cat.name)}</td><td class="r num">${rs(p.price)}</td><td class="r num">${fmtQ(p.stock)} ${p.unit}</td><td><span class="pill ${k}">${t}</span></td>
+    <td><div class="adj"><input class="inp num" type="number" min="0" step="any" value="1" id="q-${p.id}" aria-label="Quantity"><button class="btn" data-a="in" data-id="${p.id}">+ In</button><button class="btn" data-a="out" data-id="${p.id}">− Out</button></div></td>
+    <td><div class="adj"><button class="btn rowbtn" data-a="lbl" data-id="${p.id}">Label</button><button class="btn danger rowbtn" data-a="del" data-id="${p.id}">${delArm===p.id?'Confirm':'Delete'}</button></div></td></tr>`}).join('')
+    :`<tr><td colspan="8"><div class="empty">No products here yet. Add one with the form above.</div></td></tr>`;
+  $('#invbody').querySelectorAll('button').forEach(b=>b.onclick=()=>{const p=S.products.find(x=>x.id===b.dataset.id);const a=b.dataset.a;const ts=Date.now();
+    if(a==='lbl')return openLabels([p],6);
+    if(a==='del'){if(delArm!==p.id){delArm=p.id;return renderInv()}S.products=S.products.filter(x=>x!==p);cart=cart.filter(l=>l.id!==p.id);delArm=null;S.moves.push({ts,name:p.name,type:'Deleted',qty:-p.stock,after:0});save();toast(p.name+' removed');return renderInv()}
+    const q=+$('#q-'+p.id).value||0;if(q<=0)return;
+    if(a==='out'&&q>p.stock)return toast(`Only ${fmtQ(p.stock)} in stock`);
+    p.stock=+(p.stock+(a==='in'?q:-q)).toFixed(3);S.moves.push({ts,name:p.name,type:a==='in'?'Stock in':'Stock out',qty:a==='in'?q:-q,after:p.stock});save();renderInv();toast(`${p.name}: ${fmtQ(p.stock)} ${p.unit} left`)})}
+['#inv-q','#inv-cat','#inv-st'].forEach(s=>$(s).addEventListener('input',renderInv));
+$('#labelsall').onclick=()=>{const l=invList();if(!l.length)return toast('No products in this list');openLabels(l.slice(0,90),1)};
+
+/* shelf / product labels */
+function labelHTML(p){return`<div class="lbl"><span class="ls">${h(S.store.name)} · Aisle ${catById(p.cat).aisle}</span><span class="ln">${h(p.name)}</span><span class="lq" data-qr="${h(p.sku)}" data-size="58"></span><span class="lp">${rs(p.price)}<small style="font-size:10px;font-weight:400">/${p.unit}</small></span><svg data-bc="${h(p.sku)}"></svg></div>`}
+function openLabels(list,copies){const draw=()=>{const n=Math.max(1,Math.min(+$('#lcopies').value||1,60));const g=$('#lblgrid');g.innerHTML=list.flatMap(p=>Array(n).fill(labelHTML(p))).join('');renderQRs(g);renderBarcodes(g)};
+  openDialog(`<div class="sheet-h"><div><h3>Barcode &amp; QR labels</h3><p class="sub" style="font-size:12px">${list.length} product${list.length>1?'s':''}. Stick on items or shelves; both codes scan into the bill.</p></div><button class="btn" id="lclose">Close</button></div>
+  <div class="lblgrid" id="lblgrid"></div><div class="dactions"><label class="label" for="lcopies">Copies each</label><input class="inp num" id="lcopies" type="number" min="1" max="60" value="${copies}" style="width:80px;flex:none">${printBtn('lprint')}</div>`,true);
+  draw();$('#lcopies').oninput=draw;$('#lclose').onclick=closeDialog;const p=$('#lprint');if(p)p.onclick=()=>doPrint(`<div class="lblgrid">${$('#lblgrid').innerHTML}</div>`,'a4')}
+
+/* CATEGORIES */
+function renderCats(){$('#cgrid').innerHTML=ALLCATS.map(c=>{const ps=S.products.filter(p=>p.cat===c.id);if(!ps.length&&c.id==='general')return'';
+  const val=ps.reduce((s,p)=>s+Math.max(p.stock,0)*(p.cost||p.price),0);const low=ps.filter(p=>p.stock<=p.min).length;
+  return`<button class="ccard" data-c="${c.id}"><div class="top2"><div><span class="aisle">Aisle ${c.aisle}</span><h3>${h(c.name)}</h3></div>${low?`<span class="pill warn">${low} low</span>`:ps.length?'<span class="pill ok">OK</span>':''}</div>
+  <div class="stats"><div><b>${ps.length}</b><span>Products</span></div><div><b>${fmtQ(+ps.reduce((s,p)=>s+Math.max(p.stock,0),0).toFixed(1))}</b><span>Units</span></div><div><b>${val>=1e5?(val/1e5).toFixed(1)+'L':Math.round(val/1e3)+'k'}</b><span>Value Rs</span></div></div></button>`}).join('');
+  $('#cgrid').querySelectorAll('.ccard').forEach(b=>b.onclick=()=>{$('#inv-cat').value=b.dataset.c;$('#inv-q').value='';$('#inv-st').value='';show('inventory')})}
+
+/* SALES */
+function renderSales(){const start=new Date();start.setHours(0,0,0,0);const today=S.sales.filter(s=>s.ts>=start.getTime());
+  $('#salesdate').textContent=start.toLocaleDateString('en-PK',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+(today.some(s=>s.demo)?' · includes 3 demo bills':'');
+  const tot=today.reduce((s,x)=>s+x.total,0);const items=today.reduce((s,x)=>s+x.items.reduce((a,i)=>a+i.qty,0),0);
+  const profit=today.reduce((s,x)=>s+x.items.reduce((a,i)=>a+i.qty*(i.price-(i.cost||0)),0)-x.disc,0);
+  $('#k-sales').textContent=rs(tot);$('#k-bills').textContent=today.length;$('#k-items').textContent=fmtQ(+items.toFixed(2));$('#k-profit').textContent=rs(profit);
+  const byCat={};today.forEach(s=>s.items.forEach(i=>byCat[i.cat]=(byCat[i.cat]||0)+i.qty*i.price));const rows=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);const max=rows[0]?rows[0][1]:1;
+  $('#bars').innerHTML=rows.length?rows.map(([c,v])=>`<div class="bar"><div class="bl"><span>${h(catById(c).name)}</span><span class="num">${rs(v)}</span></div><div class="track"><div class="fill" style="width:${(v/max*100).toFixed(1)}%"></div></div></div>`).join(''):'<div class="empty">No sales yet today.</div>';
+  $('#billbody').innerHTML=S.sales.slice().reverse().slice(0,15).map(s=>`<tr class="click" data-no="${s.no}" tabindex="0"><td class="num">${billId(s.no)} ${s.demo?'<span class="demo">Demo</span>':''}</td><td class="num">${new Date(s.ts).toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'})}</td><td class="r num">${fmtQ(+s.items.reduce((a,i)=>a+i.qty,0).toFixed(2))}</td><td>${s.pay}</td><td class="r num">${rs(s.total)}</td></tr>`).join('')||'<tr><td colspan="5"><div class="empty">Bills appear here after the first sale.</div></td></tr>';
+  $('#billbody').querySelectorAll('tr.click').forEach(r=>{const go=()=>showReceipt(S.sales.find(s=>s.no===+r.dataset.no),true);r.onclick=go;r.onkeydown=e=>{if(e.key==='Enter')go()}});
+  $('#movebody').innerHTML=S.moves.slice().reverse().slice(0,25).map(m=>`<tr><td class="num">${new Date(m.ts).toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'})}</td><td>${h(m.name)}</td><td><span class="pill ${m.qty<0?'warn':'ok'}">${m.type}</span></td><td class="r num">${m.qty>0?'+':''}${fmtQ(m.qty)}</td><td class="r num">${fmtQ(m.after)}</td></tr>`).join('')||'<tr><td colspan="5"><div class="empty">No stock movement yet.</div></td></tr>'}
+let resetArm=false;$('#reset').onclick=()=>{if(!resetArm){resetArm=true;$('#reset').textContent='Confirm reset';$('#resetmsg').textContent='This wipes products, bills, shifts and logs on this device. Store details stay.';return}
+  const keep={store:S.store,staff:S.staff,audit:S.audit};S=seed();Object.assign(S,keep);audit('Reset demo data');save();cart=[];resetArm=false;$('#reset').textContent='Reset demo data';$('#resetmsg').textContent='';renderHeader();render();toast('Demo data restored')};
+
+/* SHIFT — opening and closing */
+function shiftTotals(sh){const sales=S.sales.filter(s=>s.shiftId===sh.id);const by={Cash:0,Card:0,Easypaisa:0,JazzCash:0};
+  sales.forEach(s=>by[s.pay]=(by[s.pay]||0)+s.total);
+  return{sales,by,count:sales.length,items:sales.reduce((a,s)=>a+s.items.reduce((b,i)=>b+i.qty,0),0),gross:sales.reduce((a,s)=>a+s.sub,0),disc:sales.reduce((a,s)=>a+s.disc,0),net:sales.reduce((a,s)=>a+s.total,0),expected:sh.opening+by.Cash}}
+function diffPill(d){return Math.abs(d)<1?'<span class="pill ok">Matched</span>':d<0?`<span class="pill bad">Short ${rs(-d)}</span>`:`<span class="pill warn">Over ${rs(d)}</span>`}
+function renderShift(){const box=$('#shiftbody');
+  if(!S.shift){box.innerHTML=`<div class="panel closebox" style="max-width:520px"><h3>No shift open</h3><p class="sub">Open the counter from Billing to start a new shift.</p>${ME.role==='accountant'?'':'<button class="btn primary" id="goopen">Go to opening</button>'}</div>`;const g=$('#goopen');if(g)g.onclick=()=>show('billing')}
+  else{const sh=S.shift,t=shiftTotals(sh);
+    box.innerHTML=`<div class="two"><div class="panel"><div class="ph"><div><span class="label">Shift #${sh.id} · open</span><h3>${h(sh.cashier)}</h3></div><span class="sub num">Since ${dt(sh.openedAt)}</span></div>
+      <div class="ledger">
+        <div class="lr"><span>Opening cash</span><span class="num">${rs(sh.opening)}</span></div>
+        <div class="lr"><span>Bills</span><span class="num">${t.count}</span></div>
+        <div class="lr"><span>Gross sales</span><span class="num">${rs(t.gross)}</span></div>
+        <div class="lr"><span>Discounts given</span><span class="num">-${rs(t.disc)}</span></div>
+        ${Object.entries(t.by).map(([k,v])=>`<div class="lr"><span>${k}</span><span class="num">${rs(v)}</span></div>`).join('')}
+        <div class="lr total"><span>Cash expected in drawer</span><span class="num">${rs(t.expected)}</span></div>
+      </div></div>
+      <div class="panel closebox"><span class="label">Closing</span><h3>Count the drawer</h3>
+        <div class="field"><label class="label" for="cl-count">Counted cash (Rs)</label><input id="cl-count" type="number" min="0" class="num" placeholder="${Math.round(t.expected)}"></div>
+        <div class="trow"><span>Difference</span><span id="cl-diff">—</span></div>
+        <div class="field"><label class="label" for="cl-note">Note (optional)</label><input id="cl-note" placeholder="e.g. Rs 500 given to supplier"></div>
+        <button class="btn primary checkout" id="cl-btn">Close shift &amp; make Z-report</button><p class="sub" id="cl-msg" style="font-size:12px"></p></div></div>`;
+    const upd=()=>{const v=$('#cl-count').value;$('#cl-diff').innerHTML=v===''?'—':diffPill(+v-t.expected)};$('#cl-count').oninput=upd;
+    if(ME.role==='accountant'){$('#cl-btn').disabled=true;$('#cl-msg').textContent='The cashier or admin closes the shift. You can review it here.'}
+    let arm=false;$('#cl-btn').onclick=()=>{if(ME.role==='accountant')return;if(cart.length){$('#cl-msg').textContent='Finish or clear the current bill before closing.';return}
+      if($('#cl-count').value===''){$('#cl-msg').textContent='Enter the counted cash first.';$('#cl-count').focus();return}
+      if(!arm){arm=true;$('#cl-btn').textContent='Confirm close';$('#cl-msg').textContent='Billing stops until the next opening.';return}
+      const counted=+$('#cl-count').value;const closed={...sh,closedAt:Date.now(),counted,note:$('#cl-note').value.trim(),...(({by,count,items,gross,disc,net,expected})=>({by,count,items,gross,disc,net,expected}))(t)};
+      S.shifts.push(closed);S.shift=null;audit(`Closed shift #${closed.id} · counted ${rs(counted)} · ${Math.abs(counted-closed.expected)<1?'matched':(counted<closed.expected?'short ':'over ')+rs(Math.abs(counted-closed.expected))}`);save();renderHeader();renderShift();showZ(closed)}}
+  $('#shifthist').innerHTML=S.shifts.slice().reverse().map(z=>`<tr class="click" data-id="${z.id}" tabindex="0"><td class="num">#${z.id}</td><td>${h(z.cashier)}</td><td class="num">${dt(z.openedAt)}</td><td class="num">${dt(z.closedAt)}</td><td class="r num">${rs(z.net)}</td><td class="r">${diffPill(z.counted-z.expected)}</td></tr>`).join('')||'<tr><td colspan="6"><div class="empty">Closed shifts and their Z-reports appear here.</div></td></tr>';
+  $('#shifthist').querySelectorAll('tr.click').forEach(r=>{const go=()=>showZ(S.shifts.find(z=>z.id===+r.dataset.id));r.onclick=go;r.onkeydown=e=>{if(e.key==='Enter')go()}})}
+function zPaper(z){const d=z.counted-z.expected;
+  return`<div class="paper">${storeHead()}<hr><div class="c"><b>Z-REPORT · DAY CLOSING</b><div>Shift #${z.id}</div></div><hr>
+  <div class="rr"><span>Cashier</span><span>${h(z.cashier)}</span></div><div class="rr"><span>Opened</span><span>${dt(z.openedAt)}</span></div><div class="rr"><span>Closed</span><span>${dt(z.closedAt)}</span></div><hr>
+  <div class="rr"><span>Bills</span><span>${z.count}</span></div><div class="rr"><span>Items sold</span><span>${fmtQ(+z.items.toFixed(2))}</span></div>
+  <div class="rr"><span>Gross sales</span><span>${rs(z.gross)}</span></div><div class="rr"><span>Discounts</span><span>-${rs(z.disc)}</span></div><div class="rr big"><span>NET SALES</span><span>${rs(z.net)}</span></div><hr>
+  ${Object.entries(z.by).map(([k,v])=>`<div class="rr"><span>${k}</span><span>${rs(v)}</span></div>`).join('')}<hr>
+  <div class="rr"><span>Opening cash</span><span>${rs(z.opening)}</span></div><div class="rr"><span>+ Cash sales</span><span>${rs(z.by.Cash||0)}</span></div>
+  <div class="rr"><span>Expected in drawer</span><span>${rs(z.expected)}</span></div><div class="rr"><span>Counted</span><span>${rs(z.counted)}</span></div>
+  <div class="rr big"><span>${Math.abs(d)<1?'MATCHED':d<0?'SHORT':'OVER'}</span><span>${rs(Math.abs(d))}</span></div>
+  ${z.note?`<hr><div>Note: ${h(z.note)}</div>`:''}<hr>
+  <div class="qrwrap"><div class="qrbox" data-qr="${h(`S2C-Z:${z.id}|${S.store.name}|Net ${Math.round(z.net)}|Diff ${Math.round(d)}`)}"></div></div>
+  <div style="margin-top:22px" class="rr"><span>Cashier sign ________</span><span>Manager ________</span></div></div>`}
+function showZ(z){openDialog(zPaper(z)+`<div class="dactions">${printBtn('zprint')}<button class="btn" id="zclose" data-focus>Close</button></div>`);
+  const p=$('#zprint');if(p)p.onclick=()=>doPrint($('#dialog .paper').outerHTML,'80');$('#zclose').onclick=closeDialog}
+
+/* STORE */
+const SF={name:'#st-name',tag:'#st-tag',addr:'#st-addr',phone:'#st-phone',ntn:'#st-ntn',policy:'#st-policy',foot:'#st-foot'};
+function fillStore(){Object.entries(SF).forEach(([k,s])=>$(s).value=S.store[k]||'');renderPreview()}
+function sampleSale(){return S.sales[S.sales.length-1]||{no:S.seq,ts:Date.now(),items:[{name:"Olper's Full Cream Milk 1L",qty:2,price:330},{name:'Dawn Bread Large',qty:1,price:190}],sub:850,disc:0,total:850,pay:'Cash',cash:1000,cashier:'Sample'}}
+function renderPreview(){const keep=S.store;S.store=Object.fromEntries(Object.entries(SF).map(([k,s])=>[k,$(s).value.trim()]));$('#preview').innerHTML=receiptPaper(sampleSale(),false);S.store=keep;renderQRs($('#preview'))}
+Object.values(SF).forEach(s=>$(s).addEventListener('input',renderPreview));
+$('#storeform').onsubmit=e=>{e.preventDefault();S.store=Object.fromEntries(Object.entries(SF).map(([k,s])=>[k,$(s).value.trim()]));if(!S.store.name)S.store.name='My Store';audit('Updated store details');save();renderHeader();toast('Store details saved. They print on every bill')};
+
+/* AI tester */
+function runTest(){const v=$('#t-in').value;const d=detectCategory(v);const c=catById(d.id);
+  $('#t-out').innerHTML=v.trim()?`<div class="label">Files into</div><div style="font-family:var(--f-display);font-size:18px;font-weight:700">Aisle ${c.aisle} · ${h(c.name)}</div><div class="sub" style="font-size:12px">${d.score?'Matched: '+d.hits.map(h).join(', ')+' · score '+d.score:'No keyword matched'}</div>`:'<span class="sub">Type a product name.</span>'}
+$('#t-in').oninput=runTest;
+
+/* ===== LOGIN — three roles ===== */
+async function hashPin(pin,salt){const data=new TextEncoder().encode(salt+':'+pin);
+  try{if(window.crypto&&crypto.subtle){const b=await crypto.subtle.digest('SHA-256',data);return'h:'+[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}}catch(e){}
+  let x=5381;for(const c of data)x=((x<<5)+x+c)>>>0;return'f:'+x.toString(36)}
+async function verifyPin(u,pin){return(await hashPin(pin,u.salt))===u.hash}
+async function makeStaff(name,username,role,pin,phone,isDefault){const salt=Math.random().toString(36).slice(2,10);
+  return{id:'u'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name,username:username.toLowerCase(),role,phone:phone||'',salt,hash:await hashPin(pin,salt),active:true,isDefault:!!isDefault,created:Date.now(),last:null}}
+const DEFAULT_LOGINS=[['Owner','admin','admin','admin123'],['Accountant','accounts','accountant','acc123'],['Ahmed','cashier1','staff','1234']];
+async function ensureStaff(){if(S.staff&&S.staff.length)return;S.staff=[];for(const[n,u,r,p]of DEFAULT_LOGINS)S.staff.push(await makeStaff(n,u,r,p,'',true));save()}
+
+let loginRole='admin',fails=0,lockUntil=0;
+document.querySelectorAll('.role').forEach(b=>b.onclick=()=>{loginRole=b.dataset.r;document.querySelectorAll('.role').forEach(x=>x.setAttribute('aria-pressed',x===b));$('#lg-err').textContent='';$('#lg-user').focus()});
+function showLogin(){$('#loginview').hidden=false;$('#apphead').hidden=true;$('#appmain').hidden=true;$('#lg-store').textContent=S.store.name||'Store';$('#lg-pin').value='';
+  const d=(S.staff||[]).filter(u=>u.isDefault&&u.active);
+  $('#lg-creds').hidden=!d.length;$('#lg-creds').innerHTML='<b>First-time logins</b> (change these in Admin Panel):<br>'+d.map(u=>`${ROLE_NAME[u.role]}: <b>${h(u.username)}</b> / <b>${h(DEFAULT_LOGINS.find(x=>x[1]===u.username)?.[3]||'')}</b>`).join('<br>');
+  setTimeout(()=>$('#lg-user').focus(),30)}
+function enterApp(){$('#loginview').hidden=true;$('#apphead').hidden=false;$('#appmain').hidden=false;renderHeader();show(HOME[ME.role])}
+$('#loginform').onsubmit=async e=>{e.preventDefault();const err=$('#lg-err');
+  if(Date.now()<lockUntil){err.textContent=`Too many wrong tries. Wait ${Math.ceil((lockUntil-Date.now())/1000)} seconds.`;return}
+  const un=$('#lg-user').value.trim().toLowerCase(),pin=$('#lg-pin').value;const u=S.staff.find(x=>x.username===un);
+  const ok=u&&u.active&&u.role===loginRole&&await verifyPin(u,pin);
+  if(!ok){fails++;if(fails>=5){lockUntil=Date.now()+30000;fails=0}
+    err.textContent=u&&!u.active?'This account is disabled. Ask the admin.':u&&u.role!==loginRole&&await verifyPin(u,pin)?`This is a ${ROLE_NAME[u.role]} account. Pick that role above.`:'Wrong username or password.';
+    const w=ME;ME={name:un||'unknown'};audit(`Failed login as ${ROLE_NAME[loginRole]}`);ME=w;save();return}
+  fails=0;ME=u;u.last=Date.now();audit(`Logged in as ${ROLE_NAME[u.role]}`);save();try{sessionStorage.setItem('s2c_me',u.id)}catch(e){}
+  err.textContent='';$('#lg-user').value='';$('#lg-pin').value='';enterApp();
+  if(u.isDefault)toast('You are using a first-time password. Change it in Admin Panel.')};
+$('#logout').onclick=()=>{if(cart.length&&!document.body.dataset.armout){document.body.dataset.armout=1;toast('Bill has items. Click Log out again to discard it.');setTimeout(()=>delete document.body.dataset.armout,4000);return}
+  audit('Logged out');save();ME=null;cart=[];closeDialog();try{sessionStorage.removeItem('s2c_me')}catch(e){}showLogin()};
+
+/* ===== ADMIN — staff list ===== */
+let pinFor=null,delStaff=null;
+const activeAdmins=()=>S.staff.filter(u=>u.role==='admin'&&u.active).length;
+function renderStaff(){$('#staffcount').textContent=`${S.staff.filter(u=>u.active).length} active · ${S.staff.length} total`;
+  $('#staffbody').innerHTML=S.staff.map(u=>`<tr><td><b>${h(u.name)}</b>${u.id===ME.id?' <span class="label">(you)</span>':''}</td><td class="num">${h(u.username)}</td>
+   <td><select class="inp" data-a="role" data-id="${u.id}" style="width:auto;padding:5px 8px" aria-label="Role">${['staff','accountant','admin'].map(r=>`<option value="${r}" ${u.role===r?'selected':''}>${ROLE_NAME[r]}</option>`).join('')}</select></td>
+   <td class="num">${h(u.phone||'—')}</td><td>${u.active?'<span class="pill ok">Active</span>':'<span class="pill bad">Disabled</span>'}${u.isDefault?' <span class="pill warn">First-time password</span>':''}</td>
+   <td class="num">${u.last?dt(u.last):'Never'}</td>
+   <td>${pinFor===u.id?`<div class="adj"><input class="inp" type="password" id="np-${u.id}" placeholder="New PIN" style="width:110px" autocomplete="new-password"><button class="btn rowbtn primary" data-a="savepin" data-id="${u.id}">Save</button><button class="btn rowbtn" data-a="cancel">Cancel</button></div>`
+     :`<div class="adj"><button class="btn rowbtn" data-a="pin" data-id="${u.id}">Change PIN</button><button class="btn rowbtn" data-a="toggle" data-id="${u.id}">${u.active?'Disable':'Enable'}</button><button class="btn rowbtn danger" data-a="del" data-id="${u.id}">${delStaff===u.id?'Confirm':'Delete'}</button></div>`}</td></tr>`).join('');
+  $('#staffbody').querySelectorAll('[data-a]').forEach(el=>{const a=el.dataset.a;const u=S.staff.find(x=>x.id===el.dataset.id);
+    if(a==='role'){el.onchange=()=>{if(u.role==='admin'&&el.value!=='admin'&&activeAdmins()<=1){toast('Keep at least one active Admin');el.value='admin';return}u.role=el.value;audit(`Changed ${u.name} to ${ROLE_NAME[u.role]}`);save();renderStaff();if(u.id===ME.id){renderHeader();show(HOME[ME.role])}};return}
+    el.onclick=async()=>{
+      if(a==='cancel'){pinFor=null;return renderStaff()}
+      if(a==='pin'){pinFor=u.id;renderStaff();$('#np-'+u.id).focus();return}
+      if(a==='savepin'){const p=$('#np-'+u.id).value;if(p.length<4)return toast('PIN must be at least 4 characters');u.salt=Math.random().toString(36).slice(2,10);u.hash=await hashPin(p,u.salt);u.isDefault=false;pinFor=null;audit(`Changed PIN for ${u.name}`);save();renderStaff();return toast('PIN changed for '+u.name)}
+      if(a==='toggle'){if(u.id===ME.id)return toast('You cannot disable your own account');if(u.active&&u.role==='admin'&&activeAdmins()<=1)return toast('Keep at least one active Admin');u.active=!u.active;audit(`${u.active?'Enabled':'Disabled'} ${u.name}`);save();return renderStaff()}
+      if(a==='del'){if(u.id===ME.id)return toast('You cannot delete your own account');if(u.role==='admin'&&u.active&&activeAdmins()<=1)return toast('Keep at least one active Admin');if(delStaff!==u.id){delStaff=u.id;return renderStaff()}
+        S.staff=S.staff.filter(x=>x!==u);delStaff=null;audit(`Deleted staff ${u.name}`);save();renderStaff()}}})}
+$('#staffform').onsubmit=async e=>{e.preventDefault();const un=$('#sf-user').value.trim().toLowerCase();
+  if(!/^[a-z0-9._-]{3,}$/.test(un))return toast('Username: 3+ letters or numbers, no spaces');if(S.staff.some(u=>u.username===un))return toast('That username is taken');
+  if($('#sf-pin').value.length<4)return toast('PIN must be at least 4 characters');
+  const u=await makeStaff($('#sf-name').value.trim(),un,$('#sf-role').value,$('#sf-pin').value,$('#sf-phone').value.trim(),false);S.staff.push(u);audit(`Added ${ROLE_NAME[u.role]} ${u.name}`);save();e.target.reset();renderStaff();toast(`${u.name} can now sign in as ${ROLE_NAME[u.role]}`)};
+
+/* ===== ADMIN — upload data (CSV / Excel) ===== */
+const TPL={products:{head:['name','price','cost','qty','unit','barcode','category','min'],rows:[["Olper's Milk 1L",330,290,24,'pcs','8961014000017','',5],['Basmati Rice 5kg',2650,2400,10,'pcs','','Atta, Rice & Daal',3],['Tomatoes',160,120,25,'kg','','',5]],
+    help:'Columns: <code>name</code> and <code>price</code> are required. Optional: <code>cost</code>, <code>qty</code>, <code>unit</code>, <code>barcode</code>, <code>category</code>, <code>min</code>. Blank category is filled automatically. A product already in stock (same barcode or name) gets the quantity added.'},
+  staff:{head:['name','username','role','pin','phone'],rows:[['Bilal Khan','bilal','staff','4821','0301-0000000'],['Sana Ali','sana','accountant','7314','']],
+    help:'Columns: <code>name</code>, <code>username</code>, <code>role</code> (admin / accountant / staff), <code>pin</code> (4+ characters), <code>phone</code> optional. Existing usernames are skipped.'}};
+const ALIAS={name:['name','product','item','product name','item name','full name'],price:['price','sale price','rate','mrp','retail'],cost:['cost','cost price','purchase','purchase price'],qty:['qty','quantity','stock','opening stock'],
+  unit:['unit','uom'],barcode:['barcode','sku','code','bar code'],category:['category','cat','department'],min:['min','alert','reorder','min stock'],username:['username','user','login'],role:['role','type'],pin:['pin','password','pass'],phone:['phone','mobile','contact']};
+let impRows=[];
+function parseCSV(t){const rows=[];let row=[],f='',q=false;t=t.replace(/^﻿/,'');
+  for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true;else if(c===','||c==='\t'){row.push(f);f=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);rows.push(row);row=[];f=''}else f+=c}
+  if(f!==''||row.length){row.push(f);rows.push(row)}return rows.filter(r=>r.some(x=>String(x).trim()!==''))}
+function toObjects(rows){if(!rows.length)return[];const head=rows[0].map(x=>String(x).trim().toLowerCase());const idx={};
+  for(const[k,al]of Object.entries(ALIAS)){const i=head.findIndex(x=>al.includes(x));if(i>=0)idx[k]=i}
+  return rows.slice(1).map(r=>Object.fromEntries(Object.entries(idx).map(([k,i])=>[k,String(r[i]??'').trim()])))}
+function findCat(v){if(!v)return null;const s=v.toLowerCase();return(ALLCATS.find(c=>c.id===s||c.aisle===s.padStart(2,'0')||c.name.toLowerCase()===s)||ALLCATS.find(c=>c.name.toLowerCase().includes(s)))?.id||null}
+function planProducts(objs){return objs.map(o=>{const price=parseFloat(String(o.price).replace(/[^0-9.]/g,''));
+  if(!o.name)return{st:'err',msg:'Name missing',o};if(!(price>=0))return{st:'err',msg:'Price missing',o};
+  const ex=(o.barcode&&S.products.find(p=>p.sku===o.barcode))||S.products.find(p=>p.name.toLowerCase()===o.name.toLowerCase());
+  const cat=findCat(o.category)||(ex?ex.cat:detectCategory(o.name).id);
+  return{st:ex?'add':'new',msg:ex?`Adds to ${ex.name}`:catById(cat).name,o,price,cat,ex}})}
+function planStaff(objs){const seen=new Set();return objs.map(o=>{const un=(o.username||'').toLowerCase();let role=(o.role||'staff').toLowerCase();if(/cash|staff|sales/.test(role))role='staff';else if(/account/.test(role))role='accountant';else if(/admin|owner|manager/.test(role))role='admin';else role=null;
+  if(!o.name||!un)return{st:'err',msg:'Name or username missing',o};if(!/^[a-z0-9._-]{3,}$/.test(un))return{st:'err',msg:'Bad username',o};
+  if(S.staff.some(u=>u.username===un)||seen.has(un))return{st:'err',msg:'Username exists',o};if(!role)return{st:'err',msg:'Unknown role',o};if(!o.pin||o.pin.length<4)return{st:'err',msg:'PIN under 4 characters',o};
+  seen.add(un);return{st:'new',msg:ROLE_NAME[role],o,role,un}})}
+async function readImport(file){const kind=$('#imp-kind').value;let rows;
+  try{if(/\.xlsx?$/i.test(file.name)){if(typeof XLSX==='undefined')throw new Error('Excel reader did not load. Save the sheet as CSV and upload that.');
+      const wb=XLSX.read(await file.arrayBuffer());rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''})}
+    else rows=parseCSV(await file.text())}
+  catch(e){$('#imp-prev').innerHTML=`<p class="err">${h(e.message||'Could not read this file.')}</p>`;return}
+  const objs=toObjects(rows);if(!objs.length||!Object.keys(objs[0]).includes('name')){$('#imp-prev').innerHTML='<p class="err">No <b>name</b> column found. Use the sample file headings.</p>';return}
+  impRows=kind==='products'?planProducts(objs):planStaff(objs);renderImport(file.name)}
+function renderImport(fname){const kind=$('#imp-kind').value;const n=s=>impRows.filter(r=>r.st===s).length;const good=impRows.length-n('err');
+  $('#imp-prev').innerHTML=`<div class="inline" style="margin-bottom:8px"><b>${h(fname)}</b><span class="pill auto">${n('new')} new</span>${kind==='products'?`<span class="pill ok">${n('add')} add stock</span>`:''}${n('err')?`<span class="pill bad">${n('err')} skipped</span>`:''}</div>
+   <div class="prev"><table><thead><tr><th>Status</th><th>Name</th>${kind==='products'?'<th class="r">Price</th><th class="r">Qty</th><th>Result</th>':'<th>Username</th><th>Result</th>'}</tr></thead><tbody>
+   ${impRows.slice(0,200).map(r=>`<tr><td><span class="pill ${r.st==='err'?'bad':r.st==='add'?'ok':'auto'}">${r.st==='err'?'Skip':r.st==='add'?'Add':'New'}</span></td><td>${h(r.o.name||'—')}</td>${kind==='products'?`<td class="r num">${r.price>=0?rs(r.price):'—'}</td><td class="r num">${h(r.o.qty||'0')}</td>`:`<td class="num">${h(r.o.username||'—')}</td>`}<td>${h(r.msg)}</td></tr>`).join('')}</tbody></table></div>
+   <div class="inline" style="margin-top:10px"><button class="btn primary" id="imp-go" ${good?'':'disabled'}>Import ${good} row${good===1?'':'s'}</button><button class="btn" id="imp-cancel">Cancel</button></div>`;
+  $('#imp-cancel').onclick=()=>{impRows=[];$('#imp-prev').innerHTML='';$('#imp-file').value=''};
+  $('#imp-go').onclick=async()=>{const ts=Date.now();let c=0;
+    if(kind==='products'){for(const r of impRows){if(r.st==='err')continue;const qty=parseFloat(r.o.qty)||0;
+        if(r.ex){r.ex.stock=+(r.ex.stock+qty).toFixed(3);r.ex.price=r.price||r.ex.price;if(r.o.cost)r.ex.cost=parseFloat(r.o.cost)||r.ex.cost;if(r.o.category)r.ex.cat=r.cat;S.moves.push({ts,name:r.ex.name,type:'Import',qty,after:r.ex.stock})}
+        else{let sku=r.o.barcode;if(!sku||S.products.some(p=>p.sku===sku)){let n=890001+S.nextP*7;while(S.products.some(p=>p.sku===String(n)))n++;sku=String(n)}
+          S.products.unshift({id:'p'+(S.nextP++),sku,name:r.o.name,cat:r.cat,price:r.price,cost:parseFloat(r.o.cost)||0,stock:qty,unit:r.o.unit||'pcs',min:parseFloat(r.o.min)||5});S.moves.push({ts,name:r.o.name,type:'Import',qty,after:qty})}c++}}
+    else{for(const r of impRows){if(r.st==='err')continue;S.staff.push(await makeStaff(r.o.name,r.un,r.role,r.o.pin,r.o.phone,false));c++}renderStaff()}
+    audit(`Uploaded ${c} ${kind==='products'?'product rows':'staff'} from file`);save();impRows=[];$('#imp-file').value='';
+    $('#imp-prev').innerHTML=`<p class="sub"><span class="pill ok">Done</span> ${c} ${kind==='products'?'products imported. Open Inventory to check them.':'staff added. They can sign in now.'}</p>`;toast(`${c} rows imported`)}}
+function impHelp(){const k=$('#imp-kind').value;$('#imp-help').innerHTML=TPL[k].help;$('#imp-prev').innerHTML='';impRows=[]}
+$('#imp-kind').onchange=impHelp;
+$('#imp-file').onchange=e=>{const f=e.target.files[0];if(f)readImport(f)};
+const drop=$('#drop');['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)readImport(f)});
+const csvLine=r=>r.map(v=>/[",\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v).join(',');
+function saveFile(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+$('#tpl-copy').onclick=()=>{const k=$('#imp-kind').value;const t=[TPL[k].head,...TPL[k].rows].map(csvLine).join('\n');
+  navigator.clipboard?.writeText(t).then(()=>toast('Copied. Paste into Excel, fill it, save as CSV')).catch(()=>toast('Copy blocked. Headings: '+TPL[k].head.join(', ')))};
+$('#tpl-dl').hidden=!canPrint;$('#tpl-dl').onclick=()=>{const k=$('#imp-kind').value;saveFile(`soft2cloud-${k}-sample.csv`,'﻿'+[TPL[k].head,...TPL[k].rows].map(csvLine).join('\n'),'text/csv')};
+/* backup */
+$('#bk-dl').hidden=!canPrint;
+$('#bk-dl').onclick=()=>{audit('Downloaded backup');save();saveFile(`pos-backup-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(S),'application/json');$('#bk-msg').textContent='Backup saved to your Downloads folder.'};
+if(!canPrint)$('#bk-msg').textContent='Download backup works in the installed POS file.';
+let bkPending=null;
+$('#bk-file').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const d=JSON.parse(await f.text());if(!Array.isArray(d.products)||!Array.isArray(d.sales))throw 0;bkPending=d;
+  $('#bk-msg').innerHTML=`Backup has ${d.products.length} products and ${d.sales.length} bills. <button class="btn rowbtn danger" id="bk-go">Replace current data</button>`;
+  $('#bk-go').onclick=()=>{const me=ME.id;S=bkPending;if(!S.audit)S.audit=[];if(!S.staff||!S.staff.length)S.staff=[ME];ME=S.staff.find(u=>u.id===me)||S.staff.find(u=>u.role==='admin');audit('Restored data from backup');save();bkPending=null;$('#bk-msg').textContent='Restored.';renderHeader();show('admin')}}
+  catch(err){$('#bk-msg').textContent='This is not a POS backup file.'}e.target.value=''};
+function renderAudit(){$('#auditbody').innerHTML=S.audit.slice().reverse().slice(0,40).map(a=>`<tr><td class="num">${dt(a.ts)}</td><td>${h(a.who)}</td><td>${h(a.what)}</td></tr>`).join('')||'<tr><td colspan="3"><div class="empty">Nothing yet.</div></td></tr>'}
+function renderAdmin(){renderStaff();impHelp();renderAudit()}
+
+function render(){const v=curView();renderHeader();
+  if(v==='billing')renderBilling();if(v==='inventory'){renderInv();runDetect()}if(v==='categories')renderCats();if(v==='sales')renderSales();if(v==='shift')renderShift();if(v==='store')fillStore();if(v==='admin')renderAdmin();if(v==='ai')runTest()}
+/* Some previews (like the Claude app's file viewer) block normal form submit, so buttons and Enter call the handlers directly */
+function wireForm(f){const run=()=>{if(f.reportValidity&&!f.reportValidity())return;try{const r=f.onsubmit&&f.onsubmit({preventDefault(){},target:f});if(r&&r.catch)r.catch(err=>toast('Error: '+(err.message||err)))}catch(err){toast('Error: '+(err.message||err))}};
+  f.querySelectorAll('button[type=submit]').forEach(b=>{b.type='button';b.addEventListener('click',run)});
+  f.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.tagName==='INPUT'&&!e.defaultPrevented){e.preventDefault();run()}});
+  f.addEventListener('submit',e=>e.preventDefault(),true)}
+document.querySelectorAll('form').forEach(wireForm);
+(async()=>{await ensureStaff();let id=null;try{id=sessionStorage.getItem('s2c_me')}catch(e){}
+  const u=id&&S.staff.find(x=>x.id===id&&x.active);if(u){ME=u;enterApp()}else showLogin()})();
+</script>
+
+</body></html>

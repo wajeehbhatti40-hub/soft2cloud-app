@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Soft2Cloud Software Demos</title>
+<meta name="description" content="Live demos of Soft2Cloud business software: event hall booking, supermarket POS, weighbridge, computer scale and school management.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: navy hero with the company promise, then a grid of app cards, then contact. Soft2Cloud house colours. */
+:root{
+  --bg:#f3f5f9;--surface:#fff;--ink:#152033;--muted:#5d6a80;--line:#dde3ec;
+  --accent:#1f4fd1;--accent-ink:#fff;--accent-soft:#e6edfd;--sun:#c97a06;--sun-soft:#fdf2df;--wa:#128c4b;
+  --navy:#0f1a2c;--navy2:#16306e;
+  --display:"Archivo","Arial Narrow",system-ui,sans-serif;--body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{--bg:#0c1322;--surface:#141e31;--ink:#e7ecf5;--muted:#93a0b8;--line:#26324a;--accent:#6f95ff;--accent-ink:#081127;--accent-soft:#1b2a4f;--sun:#f0a93b;--sun-soft:#33270f;--wa:#3fcf83;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+a{color:var(--accent)}
+.wrap{max-width:1140px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{background:linear-gradient(125deg,var(--navy) 0%,var(--navy2) 60%,#1f4fd1 100%);color:#fff;padding-block:28px 56px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:1.15rem;letter-spacing:.01em}
+.mark{width:36px;height:36px;border-radius:10px;background:#1f4fd1;display:grid;place-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.mark svg{width:22px;height:22px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,3.2rem);line-height:1.08;margin:42px 0 14px;max-width:760px;text-wrap:balance}
+.lede{font-size:1.1rem;color:#c9d3e4;max-width:640px;margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.chips span{font-size:.82rem;font-weight:600;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);padding:5px 12px;border-radius:999px}
+main{padding-block:0 40px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-top:-30px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0;box-shadow:0 1px 2px rgba(15,26,44,.05),0 10px 28px rgba(15,26,44,.07)}
+.top{display:flex;align-items:center;gap:12px}
+.ic{width:44px;height:44px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex:none}
+.ic svg{width:24px;height:24px}
+.card h2{font-family:var(--display);font-size:1.2rem;font-weight:700;margin:0;line-height:1.2}
+.for{font-size:.8rem;color:var(--muted)}
+.card p{margin:0;color:var(--muted)}
+.card ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px;font-size:.92rem}
+.login{font-size:.82rem;background:var(--sun-soft);color:var(--ink);border-radius:8px;padding:8px 10px}
+.login b{font-family:ui-monospace,Menlo,Consolas,monospace}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:6px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:600;font-size:.88rem;text-decoration:none;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.wa{color:var(--wa)}
+.btn svg{width:16px;height:16px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.note{margin-top:22px;font-size:.88rem;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+footer{border-top:1px solid var(--line);padding-block:26px 36px;color:var(--muted);font-size:.9rem}
+footer .cols{display:flex;flex-wrap:wrap;gap:20px 40px;justify-content:space-between}
+footer b{color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#0f1a2c;color:#fff;padding:9px 16px;border-radius:9px;font-weight:600;font-size:.9rem}
+@media (max-width:420px){.grid{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.4 9.2 4.5 4.5 0 0 0 7 18z"/></svg></span>Soft2Cloud</div>
+    <h1>Business software you can try right now.</h1>
+    <p class="lede">Open any app below and use it with sample data. Nothing to install, nothing to sign up for. What you enter stays in your own browser.</p>
+    <div class="chips"><span>Urdu &amp; English</span><span>Works on phone and PC</span><span>Built in Lahore</span><span>Licence per business</span></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="grid" id="apps"></div>
+  <p class="note">These are demo versions with example data. The full version for your business comes with your own logins, your data saved online, a licence key and setup by our team.</p>
+</main>
+
+<footer>
+  <div class="wrap cols">
+    <div><b>Soft2Cloud</b><br>New Liberty Tower, Model Town Link Road, Lahore</div>
+    <div>Email: <b>info@soft2cloud.com</b><br>Website: <b>soft2cloud.com</b></div>
+    <div>&copy; 2026 Soft2Cloud. All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+const I = {
+  hall:'<path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/>',
+  cart:'<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.6 12.4a1 1 0 0 0 1 .8h9.7a1 1 0 0 0 1-.8L21 7H6"/>',
+  scale:'<path d="M12 3v18M5 21h14M5 7h14M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0z"/>',
+  truck:'<path d="M2 6h12v10H2zM14 10h4l3 3v3h-7z"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
+  school:'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>'
+};
+const APPS = [
+  {path:'venuedesk/', icon:'hall', name:'VenueDesk', for:'Wedding halls, banquets, farmhouses, event venues',
+   about:'Bookings, payments and staff for an event venue in one place.',
+   points:['Live hall calendar with double-booking lock','Quotes, e-signed contracts, invoices and receipts','Deposit and balance reminders on WhatsApp','Staff logins with tasks and event-day checklist'],
+   login:'Sample logins: Owner <b>1234</b> · Manager <b>1111</b> · Staff <b>3333</b>'},
+  {path:'mart-pos/', icon:'cart', name:'Mart POS', for:'Supermarkets, marts, general stores',
+   about:'Fast billing with stock that updates itself.',
+   points:['Barcode and QR scanning, printable bills with QR','Products file into the right category automatically','Opening and closing of the counter with Z-report','Admin, accountant and cashier logins'],
+   login:'Sign-in details are shown on the login screen.'},
+  {path:'weighbridge/', icon:'truck', name:'Weighbridge', for:'Dharam kanta, mills, factories, mandis',
+   about:'Vehicle weighing with driver details and printed slips.',
+   points:['Loaded and empty weighing with net load','Driver name, licence and vehicle type','Pending second weight and stored tare','Daily report and fees by vehicle type']},
+  {path:'computer-kanda/', icon:'scale', name:'Computer Kanda', for:'Sabzi, fruit, meat and grocery shops',
+   about:'Electronic price-computing scale with billing.',
+   points:['Weight × price on front and rear displays','PLU products with Urdu names and hot keys','Tare, piece counting and check-weighing','Receipts and daily sales report']},
+  {path:'school-portal/', icon:'school', name:'School Portal', for:'Schools, academies, colleges',
+   about:'The whole school in one app.',
+   points:['Principal, accountant, teacher, parent and student','Attendance, homework, marks and report cards','Fees with receipts and defaulter reminders','Excel import for a whole class in a minute'],
+   login:'On the page, press <b>Open the live demo</b> to use the sample class.'},
+  {path:'website/', icon:'globe', name:'Soft2Cloud Website', for:'About us',
+   about:'Our company site with all our software.',
+   points:['Every Soft2Cloud product in one place','Services and contact details']}
+];
+const base = location.href.replace(/[#?].*$/, '').replace(/index\.html$/, '');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+document.getElementById('apps').innerHTML = APPS.map((a, i) => {
+  const url = base + a.path;
+  const wa = 'https://wa.me/?text=' + encodeURIComponent('Try ' + a.name + ' by Soft2Cloud, live demo: ' + url);
+  return '<article class="card"><div class="top"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + I[a.icon] + '</svg></span><div><h2>' + esc(a.name) + '</h2><div class="for">' + esc(a.for) + '</div></div></div>' +
+    '<p>' + esc(a.about) + '</p><ul>' + a.points.map(p => '<li>' + esc(p) + '</li>').join('') + '</ul>' +
+    (a.login ? '<div class="login">' + a.login + '</div>' : '') +
+    '<div class="actions"><a class="btn primary" href="' + a.path + '">Open live demo</a>' +
+    '<button class="btn" data-copy="' + esc(url) + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>Copy link</button>' +
+    '<a class="btn wa" target="_blank" rel="noopener" href="' + wa + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20l1.3-4A8 8 0 1 1 8 18.7z"/></svg>Share</a></div></article>';
+}).join('');
+document.addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-copy]'); if (!b) return;
+  const t = b.dataset.copy;
+  try { await navigator.clipboard.writeText(t); toast('Link copied'); }
+  catch (err) { window.prompt('Copy this link:', t); }
+});
+function toast(m) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = m; document.body.appendChild(d); setTimeout(() => d.remove(), 2000); }
+</script>
+</body>
+</html>

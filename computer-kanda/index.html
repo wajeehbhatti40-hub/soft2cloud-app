@@ -1,0 +1,713 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<style>body{margin:0}[hidden]{display:none!important}</style>
+<title>Computer Kanda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Nastaliq+Urdu:wght@400&display=swap">
+<style>
+/* Layout: instrument on the left (front display, keypad, rear display, platter), operations desk on the right (bill, products, sales, settings), spec sheet below. */
+:root{
+  --bg:#e7eaed; --panel:#f6f7f8; --panel2:#edf0f2; --fg:#161a1e; --muted:#59626b; --line:#cbd2d8;
+  --accent:#0d6f86; --accent-fg:#ffffff; --danger:#b42318; --ok:#1d7a46; --warn:#9a5b00;
+  --dev:#24282d; --dev2:#30353b; --dev3:#40464d; --devfg:#d3d8dd; --devmuted:#8b949d; --lcd:#08090a; --ghost:rgba(255,255,255,.05);
+  --led-w:#ff4b3e; --led-p:#40ff93; --led-t:#ffb63f;
+  --key:#e6e9ec; --keyfg:#1c2025; --keyfn:#4a5158; --keyfnfg:#f1f3f5; --keyhot:#0d6f86; --keyred:#b8322a;
+  --s2c:#1d5fc4;
+  --f-disp:"Chakra Petch",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --f-ur:"Noto Nastaliq Urdu","Jameel Noori Nastaleeq",serif;
+  --glow:1;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1214; --panel:#161a1d; --panel2:#1c2125; --fg:#e3e7ea; --muted:#96a0a8; --line:#2a3136;
+  --accent:#2bb6cc; --accent-fg:#04222a; --danger:#ff6b5e; --ok:#4ade80; --warn:#f5b041;
+  --dev:#1d2125; --dev3:#3a4148; --s2c:#7fb0ff; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0f1214; --panel:#161a1d; --panel2:#1c2125; --fg:#e3e7ea; --muted:#96a0a8; --line:#2a3136;
+  --accent:#2bb6cc; --accent-fg:#04222a; --danger:#ff6b5e; --ok:#4ade80; --warn:#f5b041;
+  --dev:#1d2125; --dev3:#3a4148; --s2c:#7fb0ff; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.app{max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--f-disp);text-wrap:balance;margin:0;line-height:1.15}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ur{font-family:var(--f-ur);font-size:.85em;line-height:1.9;direction:rtl}
+
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.top h1{font-size:clamp(1.6rem,3.4vw,2.3rem);font-weight:700;letter-spacing:.01em}
+.top h1 small{display:block;font-family:var(--f-body);font-size:.95rem;font-weight:400;color:var(--muted);letter-spacing:0;margin-top:4px}
+.top .ur{font-size:1.1rem;color:var(--muted)}
+
+.grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:1000px){.grid{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+
+/* ---------- the instrument ---------- */
+.scale{background:linear-gradient(180deg,var(--dev2),var(--dev));border:1px solid var(--dev3);border-radius:18px;padding:14px;color:var(--devfg);display:flex;flex-direction:column;gap:12px;box-shadow:0 18px 40px -22px rgba(0,0,0,.55)}
+.plate{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;font-family:var(--f-disp);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--devmuted)}
+.plate b{color:var(--devfg);font-weight:600}
+.plate .spec{display:flex;flex-wrap:wrap;gap:4px 14px}
+.pwr{display:inline-flex;align-items:center;gap:6px;background:var(--dev3);border:1px solid #000;border-radius:999px;padding:4px 10px 4px 6px;color:var(--devfg);font-family:var(--f-disp);font-size:.75rem;letter-spacing:.08em}
+.pwr i{width:12px;height:12px;border-radius:50%;background:#555;box-shadow:inset 0 0 2px #000}
+.pwr.on i{background:var(--led-p);box-shadow:0 0 8px var(--led-p)}
+
+.disp{background:var(--lcd);border-radius:10px;padding:10px 12px 8px;border:1px solid #000;box-shadow:inset 0 2px 10px rgba(0,0,0,.8)}
+.disp-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--f-disp);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:#6b737b;margin-bottom:6px}
+.namestrip{font-family:var(--f-disp);font-size:.8rem;letter-spacing:.06em;color:#9aa3ab;min-height:1.4em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.wins{display:grid;grid-template-columns:6fr 7fr 8fr;gap:10px}
+@media (max-width:620px){.wins{grid-template-columns:minmax(0,1fr)}.wins .win{max-width:360px}}
+.win{min-width:0}
+.win .lbl{display:flex;justify-content:space-between;font-family:var(--f-disp);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:#7c858d;margin-bottom:2px}
+.win .lbl em{font-style:normal;color:#5d656c}
+.seg{display:block;width:100%;height:auto;overflow:visible}
+.seg .off{fill:var(--ghost)}
+.seg .on{fill:currentColor}
+.w-w{color:var(--led-w)} .w-p{color:var(--led-p)} .w-t{color:var(--led-t)}
+.seg{filter:drop-shadow(0 0 calc(3px*var(--glow)) currentColor);opacity:calc(.55 + .15*var(--glow))}
+.off-state .seg .on{fill:var(--ghost)}
+.off-state .seg{filter:none}
+.ind{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px;font-family:var(--f-disp);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase}
+.ind span{color:#30363b;display:inline-flex;align-items:center;gap:4px}
+.ind span::before{content:"";width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:6px solid currentColor}
+.ind span.lit{color:var(--led-t);text-shadow:0 0 6px rgba(255,182,63,.6)}
+.ind span.lit.red{color:var(--led-w)}
+.ind span.blink{animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.15}}
+.chk{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.chk div{text-align:center;font-family:var(--f-disp);font-size:.7rem;letter-spacing:.14em;padding:3px 0;border-radius:4px;background:#15181b;color:#3a4046}
+.chk .u.lit{background:#3b2a05;color:var(--led-t)} .chk .k.lit{background:#06301a;color:var(--led-p)} .chk .o.lit{background:#3a0f0c;color:var(--led-w)}
+
+.hot{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.hot button{background:var(--keyhot);color:#fff;border:0;border-bottom:3px solid rgba(0,0,0,.35);border-radius:8px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:0;min-width:0}
+.hot button b{font-family:var(--f-disp);font-size:.8rem;letter-spacing:.06em}
+.hot button span{font-size:.68rem;opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.keys{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+.key{border:0;border-radius:9px;padding:10px 2px 8px;background:var(--key);color:var(--keyfg);border-bottom:3px solid #9aa2aa;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-height:52px;min-width:0;transition:transform .05s}
+.key:active,.key.press{transform:translateY(2px);border-bottom-width:1px}
+.key b{font-family:var(--f-disp);font-weight:700;font-size:1.15rem;line-height:1}
+.key.fn{background:var(--keyfn);color:var(--keyfnfg);border-bottom-color:#22262a}
+.key.fn b{font-size:.86rem;letter-spacing:.05em}
+.key small{font-size:.6rem;opacity:.75;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.key.red{background:var(--keyred);color:#fff;border-bottom-color:#5e1410}
+.key.wide{grid-column:span 2}
+
+.rear{background:linear-gradient(180deg,var(--dev2),var(--dev));border:1px solid var(--dev3);border-radius:14px;padding:10px;color:var(--devfg)}
+.rear .disp{padding:8px 10px}
+.rear .wins{grid-template-columns:6fr 7fr 8fr}
+@media (max-width:620px){.rear .wins{grid-template-columns:6fr 7fr 8fr;gap:6px}}
+.rear .msg{font-family:var(--f-disp);font-size:.8rem;letter-spacing:.1em;text-align:center;color:var(--led-t);margin-top:6px;min-height:1.3em;text-transform:uppercase}
+
+/* platter simulator */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+.card h2{font-size:1.05rem;font-weight:600;letter-spacing:.02em}
+.card .sub{color:var(--muted);font-size:.86rem;margin-top:2px}
+.platter{margin-top:12px;display:flex;flex-direction:column;align-items:center;gap:0}
+.pile{display:flex;flex-wrap:wrap-reverse;justify-content:center;gap:6px;min-height:46px;padding:4px 8px;max-width:100%}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:3px 4px 3px 9px;font-size:.82rem;font-variant-numeric:tabular-nums;animation:drop .35s ease-out}
+.chip button{border:0;background:transparent;color:var(--muted);width:22px;height:22px;border-radius:4px;line-height:1}
+.chip button:hover{background:var(--line);color:var(--fg)}
+@keyframes drop{from{transform:translateY(-14px);opacity:0}}
+.pan{width:min(420px,92%);height:14px;border-radius:4px;background:linear-gradient(180deg,#d9dee3,#9aa3ab);border:1px solid #7d868e;transition:transform .4s cubic-bezier(.3,1.6,.5,1)}
+.post{width:46px;height:14px;background:#6b737b}
+.base{width:min(340px,80%);height:10px;border-radius:0 0 8px 8px;background:var(--dev)}
+.ctrls{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row label{font-size:.85rem;color:var(--muted)}
+input[type=range]{flex:1 1 200px;accent-color:var(--accent);min-width:0}
+.num{width:110px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-variant-numeric:tabular-nums}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.btn{border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:6px 10px;font-size:.84rem}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:600}
+.btn.dan{color:var(--danger)}
+.btn .w{color:var(--muted);font-variant-numeric:tabular-nums;margin-left:4px}
+
+/* operations desk */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:-4px -4px 14px;padding:0 4px;overflow-x:auto}
+.tabs button{border:0;background:none;padding:8px 12px;border-bottom:2px solid transparent;color:var(--muted);font-family:var(--f-disp);font-weight:600;letter-spacing:.04em;white-space:nowrap}
+.tabs button[aria-selected=true]{color:var(--fg);border-bottom-color:var(--accent)}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.9rem}
+th{text-align:left;font-family:var(--f-disp);font-weight:600;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:6px 6px;border-bottom:1px solid var(--line)}
+td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.r,th.r{text-align:right}
+td input{width:100%;min-width:60px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+.xbtn{border:0;background:none;color:var(--muted);padding:2px 6px;border-radius:4px}
+.xbtn:hover{color:var(--danger);background:var(--panel2)}
+.totals{display:grid;grid-template-columns:1fr auto;gap:4px 16px;margin-top:12px;font-variant-numeric:tabular-nums}
+.totals .g{font-family:var(--f-disp);font-size:1.3rem;font-weight:700;border-top:1px solid var(--line);padding-top:6px}
+.empty{color:var(--muted);font-size:.9rem;padding:18px 0;text-align:center;border:1px dashed var(--line);border-radius:10px}
+.receipt{font-family:var(--f-mono);font-size:.78rem;line-height:1.45;background:#fffef9;color:#222;padding:14px 12px;border-radius:4px;white-space:pre;overflow-x:auto;margin-top:14px;box-shadow:0 1px 0 #ddd,0 8px 18px -12px rgba(0,0,0,.4);max-width:100%}
+.stack{display:flex;flex-direction:column;gap:12px}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.kv div{background:var(--panel2);border-radius:10px;padding:10px 12px}
+.kv span{display:block;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:var(--f-disp)}
+.kv b{font-family:var(--f-disp);font-size:1.25rem;font-variant-numeric:tabular-nums}
+.set{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 14px;align-items:center}
+.set label{font-size:.9rem}
+.set label small{display:block;color:var(--muted);font-size:.78rem}
+.set select,.set input[type=text],.set input[type=number]{padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);max-width:180px}
+.set hr{grid-column:1/-1;border:0;border-top:1px solid var(--line);margin:4px 0}
+.set h3{grid-column:1/-1;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.note{font-size:.8rem;color:var(--muted)}
+.confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--panel2);padding:8px 10px;border-radius:8px}
+
+.help{font-size:.85rem;color:var(--muted)}
+.help kbd{font-family:var(--f-mono);font-size:.78rem;background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+
+/* spec sheet */
+.spec-sheet h2{font-size:1.35rem}
+.feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:14px}
+.feat section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.feat h3{font-size:.95rem;margin-bottom:6px}
+.feat ul{margin:0;padding-left:18px;font-size:.88rem;color:var(--muted)}
+.feat li{margin:3px 0}
+.feat li b{color:var(--fg);font-weight:600}
+.s2c-bar{display:flex;justify-content:flex-end;margin-bottom:-8px}
+.s2c{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--s2c);color:var(--s2c);border-radius:8px;padding:4px 10px 4px 8px;transform:rotate(-2deg);font-family:var(--f-disp);font-weight:700;letter-spacing:.08em;text-transform:uppercase;line-height:1.05;box-shadow:inset 0 0 0 2px var(--bg),inset 0 0 0 3px var(--s2c)}
+.s2c svg{width:26px;height:auto;fill:var(--s2c)}
+.s2c>span{font-size:.95rem}
+.s2c small{display:block;font-size:.58rem;letter-spacing:.14em;font-weight:600;opacity:.85}
+.s2c-foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid var(--line);padding-top:14px;font-size:.82rem;color:var(--muted)}
+.s2c-foot b{color:var(--s2c)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app">
+  <div class="s2c-bar"><span class="s2c" title="Developed by Soft2Cloud"><svg viewBox="0 0 32 20" aria-hidden="true"><path d="M8 18a6 6 0 0 1-.8-11.95A8 8 0 0 1 22.6 5 6.5 6.5 0 1 1 24.5 18Z"/></svg><span><small>Developed by</small>Soft2Cloud</span></span></div>
+  <header class="top">
+    <h1>Computer Kanda <span class="ur">کمپیوٹر کانٹا</span>
+      <small>Electronic price computing scale — working simulator with billing, PLU memory and sales report</small></h1>
+    <p class="help">Keyboard: <kbd>0–9</kbd> price · <kbd>Enter</kbd> M+ · <kbd>Z</kbd> zero · <kbd>T</kbd> tare · <kbd>P</kbd> print · <kbd>Esc</kbd> clear</p>
+  </header>
+
+  <div class="grid">
+    <div class="col">
+      <div class="scale" id="scale">
+        <div class="plate">
+          <div class="spec"><b>ACS-PK <span id="mModel">30</span></b><span>Max <b id="mMax">30 kg</b></span><span>Min <b id="mMin">100 g</b></span><span>e = <b id="mE">5 g</b></span><span>Class III</span></div>
+          <button class="pwr on" id="pwr" aria-label="Power"><i></i>POWER</button>
+        </div>
+        <div class="disp" id="front">
+          <div class="disp-head"><span>Front · Seller</span><span class="namestrip" id="nameF"></span></div>
+          <div class="wins">
+            <div class="win"><div class="lbl"><span>Weight</span><em id="lwF">kg</em></div><div id="wF"></div></div>
+            <div class="win"><div class="lbl"><span id="lpF">Unit price</span><em id="lpuF">Rs/kg</em></div><div id="pF"></div></div>
+            <div class="win"><div class="lbl"><span id="ltF">Total price</span><em id="ltuF">Rs</em></div><div id="tF"></div></div>
+          </div>
+          <div class="ind" id="indF"></div>
+          <div class="chk" id="chkF" hidden><div class="u">UNDER</div><div class="k">OK</div><div class="o">OVER</div></div>
+        </div>
+        <div class="hot" id="hot"></div>
+        <div class="keys" id="keys"></div>
+      </div>
+
+      <div class="rear" id="rearBox">
+        <div class="disp" id="rear">
+          <div class="disp-head"><span>Rear · Customer</span><span class="namestrip" id="nameR"></span></div>
+          <div class="wins">
+            <div class="win"><div class="lbl"><span>Weight</span><em id="lwR">kg</em></div><div id="wR"></div></div>
+            <div class="win"><div class="lbl"><span>Price</span><em id="lpuR">Rs/kg</em></div><div id="pR"></div></div>
+            <div class="win"><div class="lbl"><span>Total</span><em>Rs</em></div><div id="tR"></div></div>
+          </div>
+          <div class="msg" id="msgR"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Weighing platform</h2>
+        <p class="sub">Put goods on the pan. Items heavier than the capacity trigger the overload alarm.</p>
+        <div class="platter">
+          <div class="pile" id="pile"></div>
+          <div class="pan" id="pan"></div><div class="post"></div><div class="base"></div>
+        </div>
+        <div class="ctrls">
+          <div class="row"><label for="loose">Loose load</label><input type="range" id="loose" min="0" max="33" step="0.005" value="0"><input class="num" type="number" id="looseN" step="0.005" min="0" aria-label="Loose load in kg"><label>kg</label></div>
+          <div class="presets" id="presets"></div>
+          <div class="row"><button class="btn dan" id="clearPan">Remove everything</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card">
+        <div class="tabs" role="tablist" id="tabs">
+          <button role="tab" data-t="bill" aria-selected="true">Bill</button>
+          <button role="tab" data-t="plu" aria-selected="false">Products (PLU)</button>
+          <button role="tab" data-t="sales" aria-selected="false">Sales report</button>
+          <button role="tab" data-t="set" aria-selected="false">Settings</button>
+        </div>
+        <div id="pane"></div>
+      </div>
+      <div class="card help">
+        <h2 style="font-size:.95rem;margin-bottom:6px;color:var(--fg)">How to weigh and sell</h2>
+        Put goods on the pan, then type the price per kg (or press a hot key M1–M6, or type a PLU number and press <b>PLU</b>). Total appears instantly on both displays. Press <b>M+</b> to add the item to the bill, repeat for other items, type the cash received and press <b>CHG</b> for change, then <b>PRINT</b>. For a container: put it on, press <b>TARE</b>, then add the goods. To count pieces: press <b>MODE</b> until PCS, put sample pieces on, type how many and press <b>SAVE</b>.
+      </div>
+    </div>
+  </div>
+
+  <section class="spec-sheet">
+    <h2>Feature list</h2>
+    <div class="feat">
+      <section><h3>Weighing</h3><ul>
+        <li><b>9 capacities</b> from 30 kg to 2000 kg, each with its own division (5 g to 500 g)</li>
+        <li><b>Stability detection</b> with settling motion and STABLE lamp</li>
+        <li><b>Zero</b> within ±4% of capacity, zero-centre lamp</li>
+        <li><b>Tare</b> by weighing, plus <b>preset tare</b> typed on the keypad</li>
+        <li><b>Overload (-OL-)</b> with buzzer and <b>underload (-uL-)</b> warning</li>
+        <li><b>Minimum load</b> of 20 divisions enforced before selling</li>
+        <li><b>Data hold</b> for moving loads such as live animals</li>
+        <li><b>Span calibration</b> with a known test weight</li>
+      </ul></section>
+      <section><h3>Price computing</h3><ul>
+        <li><b>Unit price × weight</b> computed live, rounded to rupees or paisa</li>
+        <li><b>5 units</b>: kg, g, lb, oz and man (40 kg); price converts with the unit</li>
+        <li><b>PLU memory</b> with English and Urdu names, editable prices</li>
+        <li><b>Six hot keys</b> M1–M6 for best-selling items</li>
+        <li><b>Fixed-price items</b> (non-weighed, price × quantity)</li>
+        <li><b>Discount %</b> and <b>GST %</b> on the bill</li>
+      </ul></section>
+      <section><h3>Billing</h3><ul>
+        <li><b>Accumulation</b> (M+) of many items into one bill</li>
+        <li><b>Memory recall</b> (MR), <b>void last item</b>, new customer</li>
+        <li><b>Change calculation</b> from cash received</li>
+        <li><b>Printed receipt</b> with shop name, number, date and time</li>
+        <li><b>Daily sales report</b> with product totals and Z-report close</li>
+      </ul></section>
+      <section><h3>Working modes</h3><ul>
+        <li><b>Price computing</b> for shops and sabzi mandi</li>
+        <li><b>Piece counting</b> from a sample weight</li>
+        <li><b>Check-weighing</b> with UNDER / OK / OVER lamps and limits</li>
+      </ul></section>
+      <section><h3>Displays and power</h3><ul>
+        <li><b>Dual display</b>: front for seller, rear for customer, with thank-you message</li>
+        <li><b>Product name strip</b> on both displays</li>
+        <li><b>Mains or rechargeable battery</b>, charge level and blinking LO-BAT</li>
+        <li><b>Auto power-off</b> on battery when idle</li>
+        <li><b>Backlight brightness</b> in 4 steps, key beep on/off</li>
+      </ul></section>
+    </div>
+  </section>
+<footer class="s2c-foot"><span>&copy; 2026 <b>Soft2Cloud</b>. All rights reserved.</span><span class="s2c" title="Developed by Soft2Cloud"><svg viewBox="0 0 32 20" aria-hidden="true"><path d="M8 18a6 6 0 0 1-.8-11.95A8 8 0 0 1 22.6 5 6.5 6.5 0 1 1 24.5 18Z"/></svg><span><small>Developed by</small>Soft2Cloud</span></span></footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const LS='computer-kanda.v1';
+const CAPS=[[30,.005],[40,.005],[60,.01],[100,.02],[150,.05],[300,.1],[500,.1],[1000,.2],[2000,.5]];
+const UNITS={kg:{f:1,n:'kg'},g:{f:1000,n:'g'},lb:{f:2.2046226,n:'lb'},oz:{f:35.273962,n:'oz'},man:{f:0.025,n:'man'}};
+const UNIT_ORDER=['kg','g','lb','oz','man'];
+const DEF_PLU=[
+ {name:'Potatoes',ur:'آلو',price:80},{name:'Onions',ur:'پیاز',price:120},{name:'Tomatoes',ur:'ٹماٹر',price:160},
+ {name:'Apples',ur:'سیب',price:280},{name:'Bananas',ur:'کیلا',price:150},{name:'Chicken',ur:'مرغی',price:620},
+ {name:'Mutton',ur:'بکرے کا گوشت',price:2200},{name:'Sugar',ur:'چینی',price:150},{name:'Rice (basmati)',ur:'چاول',price:360},
+ {name:'Wheat flour',ur:'آٹا',price:110},{name:'Chana daal',ur:'چنے کی دال',price:300},{name:'Mangoes',ur:'آم',price:250}];
+const PRESETS=[['Plastic tray',.25],['Apples bag',1.25],['Watermelon',3.6],['Onion bag',5],['Rice sack',25],['Flour bag',40],['Goat',32],['Sugar sack',50],['Grown man',78],['Cotton bale',170],['Calf',220],['Wheat ×10 bags',400],['Buffalo',550],['Brick pallet',900]];
+
+const S={capIdx:0,unit:'kg',items:[],loose:0,zeroOff:0,tare:0,pt:false,price:0,buf:'',prevPrice:0,pluIdx:null,
+ mode:'price',pcsW:0,chkLo:0.95,chkHi:1.05,hold:false,heldQ:0,bill:[],disc:0,cash:null,batt:100,mains:true,glow:2,
+ beep:true,cal:1,autoOff:5,autoClear:false,power:true,shop:'Model Store',gst:0,dec:0,plu:DEF_PLU.map(p=>({...p})),
+ sales:[],rcNo:1,lastReceipt:null,flash:null,rearMsg:null,tab:'bill',confirmZ:false,viewRc:null};
+
+let saved=null;
+try{saved=JSON.parse(localStorage.getItem(LS)||'null')}catch(e){}
+const KEEP=['capIdx','unit','glow','beep','cal','autoOff','autoClear','shop','gst','dec','plu','sales','rcNo','chkLo','chkHi','mains'];
+if(saved){KEEP.forEach(k=>{if(saved[k]!==undefined)S[k]=saved[k]})}
+else{ // first visit: open in a working state with marked example items
+ S.items=[{n:'Apples bag',w:1.25}];S.pluIdx=3;S.price=280;
+ S.bill=[{name:'Potatoes (example)',ur:'آلو',kind:'w',qty:2.5,unit:'kg',price:80,amt:200},{name:'Onions (example)',ur:'پیاز',kind:'w',qty:1.5,unit:'kg',price:120,amt:180}];
+}
+function save(){try{const o={};KEEP.forEach(k=>o[k]=S[k]);localStorage.setItem(LS,JSON.stringify(o))}catch(e){}}
+
+const cap=()=>CAPS[S.capIdx][0], dv=()=>CAPS[S.capIdx][1], uf=()=>UNITS[S.unit].f;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=x=>S.dec?Math.round(x*100)/100:Math.round(x);
+const fmtRs=x=>Number(x).toLocaleString('en-PK',{minimumFractionDigits:S.dec,maximumFractionDigits:S.dec});
+const fmtP=p=>Number.isInteger(+(+p).toFixed(2))?String(Math.round(p)):(+p).toFixed(2);
+const wDec=()=>{const st=dv()*uf();return Math.max(0,Math.min(4,Math.ceil(-Math.log10(st)-1e-9)))};
+const fmtG=kg=>kg>=1?(+kg.toFixed(3))+' kg':Math.round(kg*1000)+' g';
+
+/* ---------- seven-segment renderer ---------- */
+const SEG={'0':'abcdef','1':'bc','2':'abged','3':'abgcd','4':'fgbc','5':'afgcd','6':'afgedc','7':'abc','8':'abcdefg','9':'abcdfg','-':'g',' ':'','E':'afged','r':'eg','O':'abcdef','L':'fed','H':'fbgec','P':'abfge','C':'afed','n':'ceg','o':'cdeg','u':'cde','t':'fged','A':'abcefg','b':'fgcde','d':'bcdeg','U':'bcdef','S':'afgcd','F':'afge','Y':'fgbcd','c':'ged','h':'fegc','i':'c','_':'d','G':'afedc','y':'fgbcd'};
+const R={a:[4,0,22,5],b:[25,3,5,23],c:[25,28,5,23],d:[4,49,22,5],e:[0,28,5,23],f:[0,3,5,23],g:[4,24.5,22,5]};
+function seg7(str,cells){
+ const ch=[];for(const c of String(str)){if(c==='.'&&ch.length&&!ch[ch.length-1].dot)ch[ch.length-1].dot=true;else if(c!=='.')ch.push({c,dot:false})}
+ while(ch.length<cells)ch.unshift({c:' ',dot:false});
+ if(ch.length>cells)ch.splice(0,ch.length-cells);
+ const W=38;let s=`<svg class="seg" viewBox="0 0 ${cells*W+4} 58">`;
+ ch.forEach((o,i)=>{const on=SEG[o.c]||'';s+=`<g transform="translate(${i*W+8},2) skewX(-6)">`;
+  for(const k of 'abcdefg'){const r=R[k];s+=`<rect x="${r[0]}" y="${r[1]}" width="${r[2]}" height="${r[3]}" rx="2" class="${on.includes(k)?'on':'off'}"/>`}
+  s+=`<circle cx="34" cy="51.5" r="3" class="${o.dot?'on':'off'}"/></g>`});
+ return s+'</svg>';
+}
+const cache={};
+function put(id,str,cells,cls){const k=str+'|'+cells;if(cache[id]===k)return;cache[id]=k;const el=$(id);el.className=cls;el.innerHTML=seg7(str,cells)}
+function setText(id,t){const el=$(id);if(el.textContent!==t)el.textContent=t}
+
+/* ---------- physics ---------- */
+const totalLoad=()=>S.items.reduce((a,b)=>a+b.w,0)+S.loose;
+let shown=0,lastTarget=0,sStart=0,sFrom=0,stable=true;
+function physics(now){
+ const target=totalLoad()*S.cal;
+ if(Math.abs(target-lastTarget)>1e-9){sFrom=shown;lastTarget=target;sStart=now}
+ const dur=550+Math.min(900,Math.abs(target-sFrom)/cap()*1600);
+ const t=(now-sStart)/dur;
+ if(t<1){shown=target+(sFrom-target)*Math.exp(-5*t)*Math.cos(t*13)+(Math.random()-.5)*dv()*5*(1-t);stable=false}
+ else{shown=target;stable=true}
+}
+function reading(){
+ const d=dv(),gross=shown-S.zeroOff,net=gross-S.tare;
+ let q=Math.round(net/d)*d;if(Math.abs(q)<d/2)q=0;
+ const ol=gross>cap()+9*d, ul=gross<-0.04*cap();
+ if(S.hold)q=S.heldQ;
+ const wU=+(q*uf()).toFixed(wDec());
+ return {gross,net,q,ol,ul,wU,stable:stable||S.hold};
+}
+
+/* ---------- audio ---------- */
+let ac=null;
+function beep(f=2600,ms=45,vol=.05){if(!S.beep)return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.type='square';o.frequency.value=f;g.gain.value=vol;o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+ms/1000)}catch(e){}}
+
+/* ---------- flash messages ---------- */
+function flash(win,text,label,ms=1400){S.flash={win,text,label,until:performance.now()+ms}}
+
+/* ---------- bill maths ---------- */
+function totals(){const sub=S.bill.reduce((a,b)=>a+b.amt,0);const da=money(sub*S.disc/100);const after=sub-da;const gst=money(after*S.gst/100);return {sub,da,gst,grand:money(after+gst),n:S.bill.length}}
+
+/* ---------- keypad ---------- */
+const KEYS=[['7','8','9',['ZERO','zero'],['TARE','tare'],['PT','preset tare']],
+ ['4','5','6',['PLU','recall no.'],['SAVE','store · smpl'],['UNIT','kg/lb/man']],
+ ['1','2','3',['MODE','price/pcs/chk'],['HOLD','freeze'],['DISC','discount %']],
+ ['0','00','.',['M+','add to bill'],['MR','bill total'],['CHG','change']],
+ [['C','clear','red'],['VOID','last item'],['FIX','qty × price'],['NEW','new bill'],['PRINT','receipt','pri2']]];
+function buildKeys(){
+ let h='';KEYS.flat().forEach(k=>{
+  if(typeof k==='string')h+=`<button class="key" data-k="${k}"><b>${k}</b></button>`;
+  else{const cls=k[2]==='red'?'key red':k[2]==='pri2'?'key fn wide':'key fn';h+=`<button class="${cls}" data-k="${k[0]}"><b>${k[0]}</b><small>${k[1]}</small></button>`}});
+ $('keys').innerHTML=h;
+ $('keys').addEventListener('click',e=>{const b=e.target.closest('[data-k]');if(b)press(b.dataset.k)});
+}
+function buildHot(){
+ $('hot').innerHTML=S.plu.slice(0,6).map((p,i)=>`<button data-h="${i}" title="${esc(p.name)} · Rs ${p.price}/kg"><b>M${i+1}</b><span>${esc(p.name)}</span></button>`).join('');
+}
+$('hot').addEventListener('click',e=>{const b=e.target.closest('[data-h]');if(!b||!S.power)return;beep();act();loadPLU(+b.dataset.h);flash('p',null,null,0)});
+
+let lastAct=performance.now();
+function act(){lastAct=performance.now()}
+function take(){const v=parseFloat(S.buf);if(S.mode==='price'&&S.buf!=='')S.price=S.prevPrice;S.buf='';return v}
+function loadPLU(i){const p=S.plu[i];if(!p){flash('t','nO PLU','PLU');beep(600,200);return}S.pluIdx=i;S.buf='';S.price=+(p.price/uf()).toFixed(2)}
+
+function press(k){
+ if(!S.power){return}
+ act();beep();
+ const r=reading(),f=uf();
+ if(/^\d$|^00$|^\.$/.test(k)){
+  if(k==='.'&&S.buf.includes('.'))return;
+  if(S.buf.replace('.','').length>=6)return;
+  if(S.buf===''){S.prevPrice=S.price;if(S.mode==='price')S.pluIdx=null}
+  S.buf=(S.buf===''&&k==='.')?'0.':S.buf+k;
+  if(S.buf==='00')S.buf='0';
+  if(S.mode==='price')S.price=parseFloat(S.buf)||0;
+  return;
+ }
+ switch(k){
+ case 'C':S.buf='';if(S.mode==='price'){S.price=0;S.pluIdx=null}S.flash=null;break;
+ case 'ZERO':
+  if(!r.stable){flash('t','buSY','Wait');break}
+  if(S.tare>0){flash('t','Err-t','Clear tare');beep(600,200);break}
+  if(Math.abs(r.gross)<=0.04*cap()){S.zeroOff+=r.gross;flash('t','0','Zeroed',700)}else{flash('t','Err-0','Out of range');beep(600,200)}
+  break;
+ case 'TARE':
+  if(!r.stable){flash('t','buSY','Wait');break}
+  if(S.tare>0&&Math.abs(r.net)<dv()){S.tare=0;S.pt=false;flash('t','t-0','Tare off',900)}
+  else if(r.gross>dv()&&r.gross<=cap()){S.tare=Math.round(r.gross/dv())*dv();S.pt=false;S.hold=false;flash('t','tArE','Tare set',900)}
+  else if(S.tare>0){S.tare=0;S.pt=false;flash('t','t-0','Tare off',900)}
+  break;
+ case 'PT':{const v=take();
+  if(isNaN(v)||v===0){S.tare=0;S.pt=false;flash('t','t-0','Tare off',900)}
+  else if(v/f>cap()){flash('t','Err','Too heavy');beep(600,200)}
+  else{S.tare=Math.round(v/f/dv())*dv();S.pt=true;flash('t','Pt','Preset tare',900)}
+  break}
+ case 'PLU':{const v=take();if(isNaN(v)){flash('t','PLU-','Type no.');break}loadPLU(Math.round(v)-1);break}
+ case 'SAVE':{const v=take();
+  if(S.mode==='count'){if(isNaN(v)||v<1){flash('t','Err','Type pcs');break}if(r.q<=0){flash('t','Lo','Load sample');break}S.pcsW=r.q/Math.round(v);flash('t','SNPL'.replace('N','n'),'Sample set');break}
+  if(isNaN(v)||v<1||v>S.plu.length+1){flash('t','Err','PLU no.');beep(600,200);break}
+  const i=Math.round(v)-1;const pk=+(S.price*f).toFixed(2);
+  if(i===S.plu.length)S.plu.push({name:'Product '+(i+1),ur:'',price:pk});else S.plu[i].price=pk;
+  S.pluIdx=i;save();buildHot();renderSide();flash('t','SAVEd','PLU '+(i+1));break}
+ case 'UNIT':{let idx=UNIT_ORDER.indexOf(S.unit);let nu;do{idx=(idx+1)%UNIT_ORDER.length;nu=UNIT_ORDER[idx]}while(nu==='g'&&cap()>60);
+  const old=f,nf=UNITS[nu].f;S.price=+(S.price*old/nf).toFixed(2);S.prevPrice=+(S.prevPrice*old/nf).toFixed(2);S.buf='';S.unit=nu;save();break}
+ case 'MODE':{S.mode=S.mode==='price'?'count':S.mode==='count'?'check':'price';S.buf='';S.hold=false;
+  const M={price:['PricE','Price mode'],count:['PCS','Counting'],check:['ChEc','Check-weigh']}[S.mode];
+  flash('t',M[0],M[1],900);renderSide();break}
+ case 'HOLD':S.hold=!S.hold;if(S.hold){const rr=reading();S.heldQ=Math.round((shown-S.zeroOff-S.tare)/dv())*dv()}break;
+ case 'DISC':{const v=take();if(isNaN(v)||v<0||v>100){flash('t','Err','0–100 %');break}S.disc=v;flash('t','d '+v,'Discount %');renderSide();break}
+ case 'M+':{
+  if(S.mode!=='price'){flash('t','Err','Price mode');break}
+  if(r.ol){flash('t','-OL-','Overload');beep(600,250);break}
+  if(!r.stable){flash('t','buSY','Wait');break}
+  if(r.q<20*dv()){flash('t','Lo','Below Min');beep(600,200);break}
+  if(S.price<=0){flash('t','Pr 0','Enter price');beep(600,200);break}
+  const p=S.pluIdx!=null?S.plu[S.pluIdx]:null;
+  S.bill.push({name:p?p.name:'Item',ur:p?p.ur:'',kind:'w',qty:r.wU,unit:S.unit,price:S.price,amt:money(r.wU*S.price)});
+  if(S.autoClear){S.price=0;S.pluIdx=null}
+  flash('t','Add '+S.bill.length,'Item added',1100);renderSide();break}
+ case 'FIX':{const v=take();const q=isNaN(v)||v<=0?1:Math.round(v);
+  if(S.price<=0){flash('t','Pr 0','Enter price');break}
+  const p=S.pluIdx!=null?S.plu[S.pluIdx]:null;
+  S.bill.push({name:p?p.name:'Fixed item',ur:p?p.ur:'',kind:'pc',qty:q,unit:'pc',price:S.price,amt:money(q*S.price)});
+  flash('t','Add '+S.bill.length,'Fixed item',1100);renderSide();break}
+ case 'MR':flash('t',fmtNum(totals().grand),'Bill total · '+S.bill.length+' items',2500);break;
+ case 'CHG':{const v=take();const g=billOrCurrent().grand;
+  if(isNaN(v)){flash('t','Err','Type cash');break}
+  if(v<g){flash('t','-'+fmtNum(g-v),'Short by',2200);beep(600,200);break}
+  S.cash=v;flash('t',fmtNum(v-g),'Change',4000);renderSide();break}
+ case 'VOID':if(S.bill.length){S.bill.pop();flash('t','dEL','Removed',900);renderSide()}else flash('t','Err','Bill empty');break;
+ case 'NEW':S.bill=[];S.disc=0;S.cash=null;flash('t','CLr','New bill',900);renderSide();break;
+ case 'PRINT':printBill();break;
+ }
+}
+function fmtNum(x){return S.dec?(+x).toFixed(2):String(Math.round(x))}
+function billOrCurrent(){
+ if(S.bill.length)return totals();
+ const r=reading();const amt=(S.mode==='price'&&r.q>0&&S.price>0)?money(r.wU*S.price):0;
+ return {grand:amt};
+}
+function printBill(){
+ const r=reading();
+ if(!S.bill.length){
+  if(S.mode==='price'&&r.stable&&!r.ol&&r.q>=20*dv()&&S.price>0)press('M+');
+  if(!S.bill.length){flash('t','Err','Nothing to print');beep(600,200);return}
+ }
+ const t=totals();
+ const rc={no:S.rcNo++,time:new Date().toISOString(),items:S.bill.map(b=>({...b})),sub:t.sub,disc:S.disc,da:t.da,gstP:S.gst,gst:t.gst,grand:t.grand,cash:S.cash,change:S.cash!=null?money(S.cash-t.grand):null};
+ S.sales.push(rc);S.lastReceipt=rc;S.viewRc=null;
+ S.bill=[];S.disc=0;S.cash=null;save();
+ flash('t','Prt','Printed',1200);S.rearMsg={text:'Thank you · شکریہ',until:performance.now()+5000};
+ beep(1800,120);S.tab='bill';renderSide();
+}
+
+/* ---------- main render loop ---------- */
+let olBeep=0,chkPrev='';
+function tick(){
+ const now=performance.now();
+ physics(now);
+ const r=reading(),on=S.power;
+ const fl=S.flash&&now<S.flash.until?S.flash:null;
+ const f=uf(),un=UNITS[S.unit].n;
+ $('front').classList.toggle('off-state',!on);$('rear').classList.toggle('off-state',!on);
+ // weight window
+ let wStr=r.ol?'-OL-':r.ul?'-uL-':r.wU.toFixed(wDec());
+ // price/total windows by mode
+ let pStr,tStr,pl='Unit price',pu='Rs/'+un,tl='Total price',tu='Rs';
+ if(S.mode==='price'){
+  pStr=S.buf!==''?S.buf:fmtP(S.price);
+  tStr=(r.ol||r.ul||r.q<=0)?'0':fmtNum(money(r.wU*S.price));
+ }else if(S.mode==='count'){
+  pl='Piece weight';pu='g';tl='Pieces';tu='pcs';
+  pStr=S.buf!==''?S.buf:(S.pcsW>0?(S.pcsW*1000).toFixed(1):'----');
+  tStr=S.pcsW>0&&!r.ol&&r.q>0?String(Math.round(r.q/S.pcsW)):(S.pcsW>0?'0':'SnPL');
+ }else{
+  pl='Low limit';pu='kg';tl='High limit';tu='kg';
+  pStr=S.buf!==''?S.buf:S.chkLo.toFixed(3);tStr=S.chkHi.toFixed(3);
+ }
+ if(fl){if(fl.win==='t'){tStr=fl.text;tl=fl.label}}
+ if(!on){wStr=pStr=tStr=''}
+ put('wF',wStr,6,'w-w');put('pF',pStr,7,'w-p');put('tF',tStr,8,'w-t');
+ setText('lwF',un);setText('lpF',pl);setText('lpuF',pu);setText('ltF',tl);setText('ltuF',tu);
+ // rear display shows the sale, not operator messages
+ let rT=S.mode==='price'?((r.ol||r.ul||r.q<=0)?'0':fmtNum(money(r.wU*S.price))):tStr;
+ if(fl&&fl.win==='t'&&/Change|Bill total/.test(fl.label))rT=fl.text;
+ put('wR',on?wStr:'',6,'w-w');put('pR',on?(S.mode==='price'?(S.buf!==''?S.buf:fmtP(S.price)):pStr):'',7,'w-p');put('tR',on?rT:'',8,'w-t');
+ setText('lwR',un);setText('lpuR','Rs/'+un);
+ const p=S.pluIdx!=null?S.plu[S.pluIdx]:null;
+ const nm=on&&p&&S.mode==='price'?`PLU ${String(S.pluIdx+1).padStart(2,'0')} · ${p.name}`:'';
+ setText('nameF',nm);setText('nameR',on&&p&&S.mode==='price'?p.name+(p.ur?' · '+p.ur:''):'');
+ let rm='';
+ if(on){if(S.rearMsg&&now<S.rearMsg.until)rm=S.rearMsg.text;else if(fl&&fl.label==='Change')rm='Your change: Rs '+fl.text;else if(S.bill.length)rm=`Bill: ${S.bill.length} item${S.bill.length>1?'s':''} · Rs ${fmtRs(totals().grand)}`;else rm=S.shop}
+ setText('msgR',rm);
+ // indicators
+ const lowBat=!S.mains&&S.batt<15;
+ const ind=[['STABLE',r.stable&&on],['ZERO',on&&Math.abs(r.gross)<dv()/4&&S.tare===0],['NET',on&&S.tare>0],['PT',on&&S.pt],['HOLD',on&&S.hold],
+  ['M+ '+(S.bill.length||''),on&&S.bill.length>0],['PCS',on&&S.mode==='count'],['CHK',on&&S.mode==='check'],['AC',on&&S.mains],
+  ['BAT '+Math.round(S.batt)+'%',on&&!S.mains,lowBat],['LO-BAT',on&&lowBat,true]];
+ const ih=ind.map(([t,l,red])=>`<span class="${l?'lit':''}${l&&red?' red blink':''}">${t}</span>`).join('');
+ const indEl=$('indF');if(indEl.dataset.h!==ih){indEl.innerHTML=ih;indEl.dataset.h=ih}
+ // check-weigh
+ $('chkF').hidden=S.mode!=='check';
+ if(S.mode==='check'){const w=r.q;let st='';if(on&&w>0.02*cap()){st=w<S.chkLo?'u':w>S.chkHi?'o':'k'}
+  ['u','k','o'].forEach(c=>$('chkF').querySelector('.'+c).classList.toggle('lit',st===c&&r.stable));
+  if(st==='k'&&r.stable&&chkPrev!=='k')beep(2200,160);chkPrev=r.stable?st:chkPrev}
+ // overload alarm
+ if(on&&r.ol&&now-olBeep>500){beep(900,220,.06);olBeep=now}
+ // pan
+ const load=totalLoad();$('pan').style.transform=`translateY(${Math.min(6,load/cap()*5)}px)`;
+ // backlight
+ document.documentElement.style.setProperty('--glow',S.glow);
+ $('pwr').classList.toggle('on',on);
+}
+
+/* ---------- battery & auto-off ---------- */
+setInterval(()=>{
+ if(S.mains)S.batt=Math.min(100,S.batt+2);
+ else if(S.power){S.batt=Math.max(0,S.batt-0.3);if(S.batt<=0){S.power=false;renderSide()}
+  if(S.autoOff>0&&performance.now()-lastAct>S.autoOff*60000&&Math.abs(reading().q)<dv()){S.power=false}}
+},3000);
+
+$('pwr').addEventListener('click',()=>{
+ if(!S.power&&!S.mains&&S.batt<=0){flash('t','bAt','Charge',1500);return}
+ S.power=!S.power;act();
+ if(S.power){S.zeroOff=shown;S.tare=0;S.pt=false;S.hold=false;flash('t','88888888','Self test',700);beep(2000,150)}
+});
+
+/* ---------- platter ---------- */
+function buildPresets(){$('presets').innerHTML=PRESETS.map((p,i)=>`<button class="btn" data-p="${i}">${p[0]}<span class="w">${fmtG(p[1])}</span></button>`).join('')}
+$('presets').addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(!b)return;const p=PRESETS[+b.dataset.p];S.items.push({n:p[0],w:p[1]});act();renderPile()});
+function renderPile(){
+ $('pile').innerHTML=S.items.length?S.items.map((it,i)=>`<span class="chip">${esc(it.n)} · ${fmtG(it.w)}<button data-x="${i}" aria-label="Take off ${esc(it.n)}">×</button></span>`).join(''):'<span class="note">Pan is empty</span>';
+}
+$('pile').addEventListener('click',e=>{const b=e.target.closest('[data-x]');if(!b)return;S.items.splice(+b.dataset.x,1);act();renderPile()});
+function syncLoose(){const sl=$('loose');sl.max=(cap()*1.12).toFixed(3);sl.step=dv();sl.value=S.loose;$('looseN').step=dv();$('looseN').value=S.loose?+S.loose.toFixed(3):''}
+$('loose').addEventListener('input',e=>{S.loose=+e.target.value;$('looseN').value=S.loose?+S.loose.toFixed(3):'';act()});
+$('looseN').addEventListener('input',e=>{S.loose=Math.max(0,+e.target.value||0);$('loose').value=S.loose;act()});
+$('clearPan').addEventListener('click',()=>{S.items=[];S.loose=0;syncLoose();renderPile();act()});
+
+/* ---------- capacity plate ---------- */
+function setCap(i){
+ S.capIdx=i;S.zeroOff=0;S.tare=0;S.pt=false;S.hold=false;if(S.unit==='g'&&cap()>60)S.unit='kg';
+ const [c,d]=CAPS[i];$('mModel').textContent=c;$('mMax').textContent=c+' kg';$('mMin').textContent=fmtG(20*d);$('mE').textContent=fmtG(d);
+ if(S.loose>cap()*1.12)S.loose=cap()*1.12;syncLoose();save();
+}
+
+/* ---------- side panel ---------- */
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(!b)return;S.tab=b.dataset.t;S.confirmZ=false;renderSide()});
+function receiptText(rc){
+ const W=32,L=(a,b)=>{a=String(a);b=String(b);const sp=Math.max(1,W-a.length-b.length);return a+' '.repeat(sp)+b};
+ const C=s=>{s=String(s);const p=Math.max(0,Math.floor((W-s.length)/2));return ' '.repeat(p)+s};
+ const dt=new Date(rc.time),pad=n=>String(n).padStart(2,'0');
+ const ds=`${pad(dt.getDate())}-${pad(dt.getMonth()+1)}-${dt.getFullYear()} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+ const line='-'.repeat(W);let o=[C(S.shop.toUpperCase()),C('Receipt #'+String(rc.no).padStart(4,'0')+'  '+ds),line];
+ rc.items.forEach(it=>{o.push(it.name.slice(0,W));o.push(L(`  ${it.kind==='w'?it.qty+' '+it.unit:it.qty+' pc'} x ${fmtP(it.price)}`,fmtRs(it.amt)))});
+ o.push(line,L('Subtotal',fmtRs(rc.sub)));
+ if(rc.disc)o.push(L(`Discount ${rc.disc}%`,'-'+fmtRs(rc.da)));
+ if(rc.gstP)o.push(L(`GST ${rc.gstP}%`,fmtRs(rc.gst)));
+ o.push(L('TOTAL Rs',fmtRs(rc.grand)));
+ if(rc.cash!=null)o.push(L('Cash',fmtRs(rc.cash)),L('Change',fmtRs(rc.change)));
+ o.push(line,C('Thank you - Shukriya'),C('Weighed on '+cap()+' kg scale'),C('Software by Soft2Cloud'));
+ return o.join('\n');
+}
+function renderSide(){
+ document.querySelectorAll('#tabs [data-t]').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===S.tab));
+ let h='';
+ if(S.tab==='bill'){
+  const t=totals();
+  if(S.bill.length){
+   h+=`<div class="tbl-wrap"><table><thead><tr><th>Item</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Amount</th><th></th></tr></thead><tbody>`+
+   S.bill.map((b,i)=>`<tr><td>${esc(b.name)}${b.ur?` <span class="ur">${esc(b.ur)}</span>`:''}</td><td class="r">${b.qty} ${b.unit}</td><td class="r">${fmtP(b.price)}</td><td class="r">${fmtRs(b.amt)}</td><td class="r"><button class="xbtn" data-del="${i}" aria-label="Remove">×</button></td></tr>`).join('')+
+   `</tbody></table></div><div class="totals"><span>Subtotal</span><span>${fmtRs(t.sub)}</span>`+
+   (S.disc?`<span>Discount ${S.disc}%</span><span>−${fmtRs(t.da)}</span>`:'')+(S.gst?`<span>GST ${S.gst}%</span><span>${fmtRs(t.gst)}</span>`:'')+
+   `<span class="g">Total Rs</span><span class="g">${fmtRs(t.grand)}</span>`+
+   (S.cash!=null?`<span>Cash</span><span>${fmtRs(S.cash)}</span><span><b>Change</b></span><span><b>${fmtRs(money(S.cash-t.grand))}</b></span>`:'')+`</div>
+   <div class="row" style="margin-top:12px"><input class="num" id="cashIn" type="number" min="0" placeholder="Cash received" value="${S.cash??''}"><button class="btn" id="cashBtn">Set cash</button><input class="num" id="discIn" type="number" min="0" max="100" placeholder="Disc %" value="${S.disc||''}" style="width:90px"><button class="btn" id="discBtn">Discount</button></div>
+   <div class="row" style="margin-top:10px"><button class="btn pri" id="printBtn">Print receipt</button><button class="btn dan" id="newBtn">Clear bill</button></div>`;
+  }else h+=`<div class="empty">No items yet. Weigh goods, set a price and press <b>M+</b>.</div>`;
+  const rc=S.viewRc||S.lastReceipt;
+  if(rc)h+=`<div class="row" style="margin-top:16px;justify-content:space-between"><b>${S.viewRc?'Receipt':'Last receipt'} #${String(rc.no).padStart(4,'0')}</b><button class="btn" id="copyRc">Copy text</button></div><pre class="receipt" id="rcTxt">${esc(receiptText(rc))}</pre>`;
+ }
+ else if(S.tab==='plu'){
+  h+=`<p class="note" style="margin:0 0 10px">Prices are per kg. The first six rows are hot keys M1–M6. You can also store the price on the display into a PLU: type the PLU number, press SAVE. Prices shown are examples — set your own.</p><div class="tbl-wrap"><table><thead><tr><th>No.</th><th>Name</th><th>Urdu</th><th class="r">Rs/kg</th><th></th></tr></thead><tbody>`+
+  S.plu.map((p,i)=>`<tr><td>${i<6?'<b>M'+(i+1)+'</b>':String(i+1).padStart(2,'0')}</td><td><input id="pn${i}" data-pf="name" data-i="${i}" value="${esc(p.name)}"></td><td><input id="pu${i}" class="ur" data-pf="ur" data-i="${i}" value="${esc(p.ur)}" dir="rtl"></td><td><input id="pp${i}" data-pf="price" data-i="${i}" type="number" min="0" value="${p.price}" style="text-align:right;max-width:100px"></td><td><button class="xbtn" data-pdel="${i}" aria-label="Delete">×</button></td></tr>`).join('')+
+  `</tbody></table></div><div class="row" style="margin-top:10px"><button class="btn pri" id="addPlu">Add product</button><button class="btn" id="resetPlu">Restore example list</button></div>`;
+ }
+ else if(S.tab==='sales'){
+  const today=new Date().toDateString();const td=S.sales.filter(s=>new Date(s.time).toDateString()===today);
+  const rev=td.reduce((a,b)=>a+b.grand,0);const by={};
+  td.forEach(s=>s.items.forEach(it=>{const k=it.name;by[k]=by[k]||{amt:0,kg:0,pc:0};by[k].amt+=it.amt;if(it.kind==='w')by[k].kg+=it.qty/UNITS[it.unit].f;else by[k].pc+=it.qty}));
+  const rows=Object.entries(by).sort((a,b)=>b[1].amt-a[1].amt);
+  h+=`<div class="kv"><div><span>Receipts</span><b>${td.length}</b></div><div><span>Sales Rs</span><b>${fmtRs(rev)}</b></div><div><span>Average bill</span><b>${fmtRs(td.length?money(rev/td.length):0)}</b></div></div>`;
+  if(rows.length){h+=`<h3 style="font-size:.85rem;margin:16px 0 6px">By product</h3><div class="tbl-wrap"><table><thead><tr><th>Product</th><th class="r">Sold</th><th class="r">Rs</th></tr></thead><tbody>`+
+   rows.map(([n,v])=>`<tr><td>${esc(n)}</td><td class="r">${v.kg?(+v.kg.toFixed(3))+' kg':''}${v.kg&&v.pc?' + ':''}${v.pc?v.pc+' pc':''}</td><td class="r">${fmtRs(v.amt)}</td></tr>`).join('')+`</tbody></table></div>`;
+   h+=`<h3 style="font-size:.85rem;margin:16px 0 6px">Receipts today</h3><div class="tbl-wrap"><table><tbody>`+td.slice().reverse().map(s=>`<tr><td>#${String(s.no).padStart(4,'0')}</td><td>${new Date(s.time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</td><td class="r">${s.items.length} items</td><td class="r">${fmtRs(s.grand)}</td><td class="r"><button class="btn" data-rc="${s.no}">View</button></td></tr>`).join('')+`</tbody></table></div>`;
+  }else h+=`<div class="empty" style="margin-top:14px">No sales today yet. Each printed receipt is added here.</div>`;
+  h+=`<div style="margin-top:14px">`+(S.confirmZ?`<div class="confirm"><span>Close the day and clear today's ${td.length} receipts?</span><button class="btn dan" id="zYes">Yes, clear</button><button class="btn" id="zNo">Cancel</button></div>`:`<button class="btn" id="zBtn" ${td.length?'':'disabled'}>Close day (Z report)</button>`)+`</div>`;
+ }
+ else{
+  h+=`<div class="set">
+   <h3>Scale</h3>
+   <label for="sCap">Capacity<small>Changes max, min and division</small></label><select id="sCap">${CAPS.map((c,i)=>`<option value="${i}" ${i===S.capIdx?'selected':''}>${c[0]} kg · e=${fmtG(c[1])}</option>`).join('')}</select>
+   <label for="sUnit">Weighing unit</label><select id="sUnit">${UNIT_ORDER.filter(u=>!(u==='g'&&cap()>60)).map(u=>`<option ${u===S.unit?'selected':''} value="${u}">${u==='man'?'man (40 kg)':u}</option>`).join('')}</select>
+   <label for="sCal">Calibrate span<small>Put a known test weight on the pan, enter it in kg. Factor now ${S.cal.toFixed(4)}</small></label><span class="row"><input id="sCal" type="number" min="0" step="0.001" placeholder="kg" style="width:90px"><button class="btn" id="calBtn">Calibrate</button></span>
+   <label>Calibration tools<small>Simulate drift to see a wrong reading, then recalibrate</small></label><span class="row"><button class="btn" id="driftBtn">Drift +1.5%</button><button class="btn" id="calReset">Reset</button></span>
+   <hr><h3>Shop and billing</h3>
+   <label for="sShop">Shop name<small>Printed on receipts and the rear display</small></label><input id="sShop" type="text" value="${esc(S.shop)}">
+   <label for="sGst">GST %</label><input id="sGst" type="number" min="0" max="50" step="0.5" value="${S.gst}">
+   <label for="sDec">Money rounding</label><select id="sDec"><option value="0" ${S.dec?'':'selected'}>Whole rupees</option><option value="2" ${S.dec?'selected':''}>Paisa (2 decimals)</option></select>
+   <label for="sAuto">Clear price after M+</label><input id="sAuto" type="checkbox" ${S.autoClear?'checked':''}>
+   <hr><h3>Check-weighing limits (kg)</h3>
+   <label for="sLo">Low limit</label><input id="sLo" type="number" step="0.005" min="0" value="${S.chkLo}">
+   <label for="sHi">High limit</label><input id="sHi" type="number" step="0.005" min="0" value="${S.chkHi}">
+   <hr><h3>Display and power</h3>
+   <label for="sGlow">Backlight</label><select id="sGlow">${[0,1,2,3].map(v=>`<option value="${v}" ${v===S.glow?'selected':''}>${['Off','Low','Medium','High'][v]}</option>`).join('')}</select>
+   <label for="sBeep">Key beep</label><input id="sBeep" type="checkbox" ${S.beep?'checked':''}>
+   <label for="sMains">Power source<small>Battery ${Math.round(S.batt)}%</small></label><select id="sMains"><option value="1" ${S.mains?'selected':''}>Mains (AC adapter)</option><option value="0" ${S.mains?'':'selected'}>Rechargeable battery</option></select>
+   <label for="sOff">Auto power-off on battery<small>When idle with an empty pan</small></label><select id="sOff">${[0,1,5,10,30].map(v=>`<option value="${v}" ${v===S.autoOff?'selected':''}>${v?v+' min':'Never'}</option>`).join('')}</select>
+  </div>`;
+ }
+ $('pane').innerHTML=h;wireSide();
+}
+function wireSide(){
+ const on=(id,ev,fn)=>{const el=$(id);if(el)el.addEventListener(ev,fn)};
+ $('pane').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{S.bill.splice(+b.dataset.del,1);renderSide()});
+ on('cashBtn','click',()=>{const v=parseFloat($('cashIn').value);S.cash=isNaN(v)?null:v;renderSide()});
+ on('discBtn','click',()=>{const v=parseFloat($('discIn').value);S.disc=isNaN(v)?0:Math.max(0,Math.min(100,v));renderSide()});
+ on('printBtn','click',()=>{if(S.power)printBill();else{S.power=true;printBill()}});
+ on('newBtn','click',()=>{S.bill=[];S.disc=0;S.cash=null;renderSide()});
+ on('copyRc','click',()=>{const t=$('rcTxt').textContent;const done=()=>{$('copyRc').textContent='Copied'};
+  try{navigator.clipboard.writeText(t).then(done,()=>sel())}catch(e){sel()}
+  function sel(){const r=document.createRange();r.selectNodeContents($('rcTxt'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('copyRc').textContent='Selected — press Ctrl+C'}});
+ $('pane').querySelectorAll('[data-pf]').forEach(inp=>inp.addEventListener('change',()=>{const i=+inp.dataset.i,f=inp.dataset.pf;S.plu[i][f]=f==='price'?Math.max(0,+inp.value||0):inp.value;if(S.pluIdx===i&&f==='price')S.price=+(S.plu[i].price/uf()).toFixed(2);save();buildHot()}));
+ $('pane').querySelectorAll('[data-pdel]').forEach(b=>b.onclick=()=>{const i=+b.dataset.pdel;S.plu.splice(i,1);if(S.pluIdx===i)S.pluIdx=null;else if(S.pluIdx>i)S.pluIdx--;save();buildHot();renderSide()});
+ on('addPlu','click',()=>{S.plu.push({name:'Product '+(S.plu.length+1),ur:'',price:0});save();buildHot();renderSide()});
+ on('resetPlu','click',()=>{S.plu=DEF_PLU.map(p=>({...p}));S.pluIdx=null;save();buildHot();renderSide()});
+ $('pane').querySelectorAll('[data-rc]').forEach(b=>b.onclick=()=>{S.viewRc=S.sales.find(s=>s.no===+b.dataset.rc);S.tab='bill';renderSide()});
+ on('zBtn','click',()=>{S.confirmZ=true;renderSide()});
+ on('zNo','click',()=>{S.confirmZ=false;renderSide()});
+ on('zYes','click',()=>{const today=new Date().toDateString();S.sales=S.sales.filter(s=>new Date(s.time).toDateString()!==today);S.confirmZ=false;S.lastReceipt=null;S.viewRc=null;save();renderSide()});
+ on('sCap','change',e=>{setCap(+e.target.value);renderSide()});
+ on('sUnit','change',e=>{const old=uf();S.unit=e.target.value;const nf=uf();S.price=+(S.price*old/nf).toFixed(2);save()});
+ on('calBtn','click',()=>{const k=parseFloat($('sCal').value);const raw=totalLoad();if(!(k>0)||raw<=0){$('sCal').placeholder='load + kg';return}S.cal=k/raw;S.zeroOff=0;save();renderSide()});
+ on('driftBtn','click',()=>{S.cal*=1.015;save();renderSide()});
+ on('calReset','click',()=>{S.cal=1;save();renderSide()});
+ on('sShop','change',e=>{S.shop=e.target.value||'Shop';save()});
+ on('sGst','change',e=>{S.gst=Math.max(0,+e.target.value||0);save()});
+ on('sDec','change',e=>{S.dec=+e.target.value;save()});
+ on('sAuto','change',e=>{S.autoClear=e.target.checked;save()});
+ on('sLo','change',e=>{S.chkLo=+e.target.value||0;save()});
+ on('sHi','change',e=>{S.chkHi=+e.target.value||0;save()});
+ on('sGlow','change',e=>{S.glow=+e.target.value;save()});
+ on('sBeep','change',e=>{S.beep=e.target.checked;save()});
+ on('sMains','change',e=>{S.mains=e.target.value==='1';act();save();renderSide()});
+ on('sOff','change',e=>{S.autoOff=+e.target.value;save()});
+}
+
+/* ---------- physical keyboard ---------- */
+document.addEventListener('keydown',e=>{
+ if(e.target.closest('input,select,textarea'))return;
+ const m={Enter:'M+',Escape:'C',Backspace:'C',z:'ZERO',t:'TARE',p:'PRINT',u:'UNIT',h:'HOLD'};
+ let k=/^[0-9.]$/.test(e.key)?e.key:m[e.key]||m[e.key.toLowerCase()];
+ if(!k)return;e.preventDefault();press(k);
+ const b=document.querySelector(`.key[data-k="${CSS.escape(k)}"]`);if(b){b.classList.add('press');setTimeout(()=>b.classList.remove('press'),120)}
+});
+
+buildKeys();buildHot();buildPresets();setCap(S.capIdx);renderPile();renderSide();
+shown=0;sStart=performance.now();
+setInterval(tick,80);tick();
+})();
+</script>
+
+</body></html>

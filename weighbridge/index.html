@@ -1,0 +1,556 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Soft2Cloud Weighbridge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Nastaliq+Urdu:wght@400&display=swap">
+<style>
+/* Layout: weighbridge indicator + bridge simulator on the left; weighing desk (ticket form, records, report, settings) on the right; slip appears under the form. */
+:root{
+  --bg:#e8eae6; --panel:#f7f8f5; --panel2:#eef0eb; --fg:#171a16; --muted:#5b6258; --line:#cdd2c8;
+  --accent:#b85c12; --accent-fg:#ffffff; --danger:#b42318; --ok:#1d7a46; --warn:#9a5b00; --pend:#9a5b00;
+  --dev:#23262a; --dev2:#2f3338; --dev3:#40454b; --devfg:#d6dadd; --devmuted:#8d959c; --lcd:#08090a; --ghost:rgba(255,255,255,.05);
+  --led:#ff4b3e; --led2:#ffb63f; --led3:#40ff93;
+  --road:#5d625c; --road2:#7a8077; --deck:#9aa096;
+  --s2c:#1d5fc4;
+  --f-disp:"Chakra Petch",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --f-ur:"Noto Nastaliq Urdu","Jameel Noori Nastaleeq",serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101210; --panel:#171a17; --panel2:#1e221e; --fg:#e4e7e2; --muted:#9aa196; --line:#2c312b;
+  --accent:#f0913f; --accent-fg:#2a1300; --danger:#ff6b5e; --ok:#4ade80; --warn:#f5b041; --pend:#f5b041;
+  --dev:#1c1f22; --dev3:#3a3f45; --road:#3a3e39; --road2:#4d524b; --deck:#6c7268; --s2c:#7fb0ff; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#101210; --panel:#171a17; --panel2:#1e221e; --fg:#e4e7e2; --muted:#9aa196; --line:#2c312b;
+  --accent:#f0913f; --accent-fg:#2a1300; --danger:#ff6b5e; --ok:#4ade80; --warn:#f5b041; --pend:#f5b041;
+  --dev:#1c1f22; --dev3:#3a3f45; --road:#3a3e39; --road2:#4d524b; --deck:#6c7268; --s2c:#7fb0ff; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.app{max-width:1320px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--f-disp);text-wrap:balance;margin:0;line-height:1.15}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.5}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ur{font-family:var(--f-ur);font-size:.85em;line-height:1.9;direction:rtl}
+
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px}
+.top h1{font-size:clamp(1.6rem,3.4vw,2.3rem);font-weight:700}
+.top h1 .ur{font-size:.6em;color:var(--muted);margin-left:8px}
+.top p{margin:4px 0 0;color:var(--muted)}
+.bridgeName{font-family:var(--f-disp);font-weight:600;letter-spacing:.04em;color:var(--muted);text-align:right}
+.bridgeName b{display:block;color:var(--fg);font-size:1.05rem}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:18px;align-items:start}
+@media (max-width:1020px){.grid{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+
+/* indicator */
+.ind{background:linear-gradient(180deg,var(--dev2),var(--dev));border:1px solid var(--dev3);border-radius:16px;padding:14px;color:var(--devfg);display:flex;flex-direction:column;gap:10px;box-shadow:0 18px 40px -22px rgba(0,0,0,.55)}
+.plate{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;font-family:var(--f-disp);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--devmuted)}
+.plate b{color:var(--devfg);font-weight:600}
+.disp{background:var(--lcd);border-radius:10px;padding:10px 14px;border:1px solid #000;box-shadow:inset 0 2px 10px rgba(0,0,0,.8)}
+.disp .lbl{display:flex;justify-content:space-between;font-family:var(--f-disp);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:#7c858d}
+.big{color:var(--led);margin:6px 0 2px}
+.seg{display:block;width:100%;height:auto;filter:drop-shadow(0 0 4px currentColor)}
+.seg .off{fill:var(--ghost)} .seg .on{fill:currentColor}
+.conv{font-family:var(--f-disp);font-size:.85rem;letter-spacing:.06em;color:#b7bfc6;font-variant-numeric:tabular-nums;display:flex;flex-wrap:wrap;gap:4px 18px}
+.lamps{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:8px;font-family:var(--f-disp);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase}
+.lamps span{color:#363c41;display:inline-flex;align-items:center;gap:5px}
+.lamps span::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.lamps span.lit{color:var(--led2);text-shadow:0 0 6px rgba(255,182,63,.6)}
+.lamps span.lit.g{color:var(--led3)} .lamps span.lit.r{color:var(--led)}
+.indBtns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.dk{border:0;border-radius:9px;padding:10px 6px;background:#4a5056;color:#f1f3f5;border-bottom:3px solid #1f2225;font-family:var(--f-disp);font-weight:600;letter-spacing:.05em;font-size:.9rem}
+.dk small{display:block;font-family:var(--f-body);font-weight:400;font-size:.68rem;opacity:.75;letter-spacing:0}
+.dk.hot{background:var(--accent);color:#fff;border-bottom-color:rgba(0,0,0,.4)}
+.dk:active{transform:translateY(2px);border-bottom-width:1px}
+
+/* bridge simulator */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+.card h2{font-size:1.05rem;font-weight:600}
+.card .sub{color:var(--muted);font-size:.86rem;margin:2px 0 0}
+.bridge{margin-top:12px;position:relative;height:96px;border-radius:8px;background:linear-gradient(180deg,transparent 62%,var(--road) 62%);overflow:hidden}
+.deck{position:absolute;left:18%;right:18%;bottom:26px;height:10px;background:var(--deck);border-radius:2px;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+.deck::before,.deck::after{content:"";position:absolute;bottom:-26px;width:10px;height:26px;background:var(--road2)}
+.deck::before{left:6%}.deck::after{right:6%}
+.veh{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);font-family:var(--f-disp);font-size:.8rem;color:var(--fg);display:flex;flex-direction:column;align-items:center;gap:2px;transition:opacity .3s}
+.veh svg{display:block;height:44px;width:auto;max-width:100%}
+.veh svg .body{fill:var(--accent)} .veh svg .win{fill:var(--panel)} .veh svg .wh{fill:var(--fg)} .veh svg .ld{fill:var(--muted)}
+.ctrls{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row label{font-size:.85rem;color:var(--muted)}
+input[type=range]{flex:1 1 200px;accent-color:var(--accent);min-width:0}
+.num{width:120px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-variant-numeric:tabular-nums}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.btn{border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:6px 11px;font-size:.85rem}
+.btn:hover:not(:disabled){border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:600}
+.btn.dan{color:var(--danger)}
+.btn.big{padding:10px 16px;font-size:.95rem}
+.btn .w{color:var(--muted);font-variant-numeric:tabular-nums;margin-left:4px}
+.btn.pri .w{color:inherit;opacity:.8}
+
+/* desk */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:-4px -4px 14px;padding:0 4px;overflow-x:auto}
+.tabs button{border:0;background:none;padding:8px 12px;border-bottom:2px solid transparent;color:var(--muted);font-family:var(--f-disp);font-weight:600;letter-spacing:.04em;white-space:nowrap}
+.tabs button[aria-selected=true]{color:var(--fg);border-bottom-color:var(--accent)}
+.tabs .cnt{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:9px;background:var(--pend);color:#1b1100;font-size:.72rem;text-align:center}
+.mode{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.mode button{border:1px solid var(--line);background:var(--panel2);border-radius:999px;padding:5px 12px;font-size:.84rem}
+.mode button[aria-pressed=true]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.pendbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px;padding:8px 10px;border-radius:10px;background:var(--panel2)}
+.pendbar b{font-size:.8rem;color:var(--muted);font-weight:500}
+.pchip{border:1px solid var(--pend);color:var(--fg);background:transparent;border-radius:8px;padding:4px 9px;font-size:.82rem;font-variant-numeric:tabular-nums}
+.pchip[aria-pressed=true]{background:var(--pend);color:#1b1100}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+legend{font-family:var(--f-disp);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding:0}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
+@media (max-width:560px){.form{grid-template-columns:minmax(0,1fr)}}
+.f{display:flex;flex-direction:column;gap:3px;min-width:0}
+.f.full{grid-column:1/-1}
+.f label{font-size:.8rem;color:var(--muted)}
+.f label .req{color:var(--danger)}
+.f input,.f select,.f textarea{padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);min-width:0;width:100%}
+.f textarea{resize:vertical;min-height:54px}
+.f input.bad,.f select.bad{border-color:var(--danger)}
+.vtypes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+@media (max-width:560px){.vtypes{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.vt{border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:6px 4px;font-size:.8rem;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
+.vt svg{height:20px;width:auto}
+.vt svg .body{fill:var(--muted)} .vt svg .win{fill:var(--bg)} .vt svg .wh{fill:var(--fg)} .vt svg .ld{fill:var(--line)}
+.vt[aria-pressed=true]{border-color:var(--accent);background:var(--panel2);font-weight:600}
+.vt[aria-pressed=true] svg .body{fill:var(--accent)}
+.vt span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.vtypes.bad .vt{border-color:var(--danger)}
+
+.weights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:4px}
+@media (max-width:560px){.weights{grid-template-columns:minmax(0,1fr)}}
+.wbox{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg);min-width:0}
+.wbox span{display:block;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-family:var(--f-disp)}
+.wbox b{font-family:var(--f-disp);font-size:1.25rem;font-variant-numeric:tabular-nums}
+.wbox small{display:block;color:var(--muted);font-size:.75rem;font-variant-numeric:tabular-nums}
+.wbox.net{border-color:var(--accent)}
+.wbox.net b{color:var(--accent)}
+.captured{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;border:1px dashed var(--line);border-radius:10px;margin-top:10px}
+.captured b{font-family:var(--f-disp);font-size:1.2rem;font-variant-numeric:tabular-nums}
+.captured .note{flex:1 1 180px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.msg{margin-top:10px;font-size:.88rem;padding:8px 10px;border-radius:8px}
+.msg.err{background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger)}
+.msg.ok{background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
+.note{font-size:.8rem;color:var(--muted)}
+.sect{display:flex;flex-direction:column;gap:14px}
+
+.slipWrap{margin-top:16px}
+.slip{font-family:var(--f-mono);font-size:.78rem;line-height:1.5;background:#fffef9;color:#222;padding:14px 12px;border-radius:4px;white-space:pre;overflow-x:auto;max-width:100%;box-shadow:0 1px 0 #ddd,0 8px 18px -12px rgba(0,0,0,.4);margin-top:8px}
+
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.86rem}
+th{text-align:left;font-family:var(--f-disp);font-weight:600;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:6px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+td.r,th.r{text-align:right}
+td small{display:block;color:var(--muted)}
+.pill{display:inline-block;font-size:.72rem;padding:1px 8px;border-radius:999px;font-family:var(--f-disp);letter-spacing:.05em}
+.pill.p{background:color-mix(in srgb,var(--pend) 22%,transparent);color:var(--pend)}
+.pill.d{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.filters input,.filters select{padding:6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);min-width:0}
+.filters input{flex:1 1 200px}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.kv div{background:var(--panel2);border-radius:10px;padding:10px 12px}
+.kv span{display:block;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:var(--f-disp)}
+.kv b{font-family:var(--f-disp);font-size:1.25rem;font-variant-numeric:tabular-nums}
+.set{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 14px;align-items:center}
+.set label{font-size:.9rem}
+.set label small{display:block;color:var(--muted);font-size:.78rem}
+.set input,.set select{padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);width:190px;max-width:100%}
+.set hr{grid-column:1/-1;border:0;border-top:1px solid var(--line);margin:2px 0}
+.set h3{grid-column:1/-1;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--panel2);padding:8px 10px;border-radius:8px}
+.empty{color:var(--muted);font-size:.9rem;padding:18px 10px;text-align:center;border:1px dashed var(--line);border-radius:10px}
+.steps{margin:0;padding-left:20px;font-size:.88rem;color:var(--muted)}
+.steps li{margin:3px 0}
+.steps b{color:var(--fg)}
+.s2c-bar{display:flex;justify-content:flex-end;margin-bottom:-8px}
+.s2c{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--s2c);color:var(--s2c);border-radius:8px;padding:4px 10px 4px 8px;transform:rotate(-2deg);font-family:var(--f-disp);font-weight:700;letter-spacing:.08em;text-transform:uppercase;line-height:1.05;box-shadow:inset 0 0 0 2px var(--bg),inset 0 0 0 3px var(--s2c)}
+.s2c svg{width:26px;height:auto;fill:var(--s2c)}
+.s2c>span{font-size:.95rem}
+.s2c small{display:block;font-size:.58rem;letter-spacing:.14em;font-weight:600;opacity:.85}
+.s2c-foot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid var(--line);padding-top:14px;font-size:.82rem;color:var(--muted)}
+.s2c-foot b{color:var(--s2c)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app">
+  <div class="s2c-bar"><span class="s2c" title="Developed by Soft2Cloud"><svg viewBox="0 0 32 20" aria-hidden="true"><path d="M8 18a6 6 0 0 1-.8-11.95A8 8 0 0 1 22.6 5 6.5 6.5 0 1 1 24.5 18Z"/></svg><span><small>Developed by</small>Soft2Cloud</span></span></div>
+  <header class="top">
+    <div>
+      <h1>Weighbridge <span class="ur">دھرم کانٹا</span></h1>
+      <p>Vehicle weighbridge: driver, licence, vehicle, loaded and empty weight, net load and weighing slip</p>
+    </div>
+    <div class="bridgeName"><b id="hName"></b><span id="hOp"></span></div>
+  </header>
+
+  <div class="grid">
+    <div class="col">
+      <div class="ind">
+        <div class="plate"><span>Weighbridge indicator</span><span>Max <b id="pMax"></b></span><span>d = <b id="pD"></b></span></div>
+        <div class="disp">
+          <div class="lbl"><span>Weight on bridge</span><span>kg</span></div>
+          <div class="big" id="wDisp"></div>
+          <div class="conv" id="conv"></div>
+          <div class="lamps" id="lamps"></div>
+        </div>
+        <div class="indBtns">
+          <button class="dk" id="kZero">ZERO<small>empty bridge</small></button>
+          <button class="dk hot" id="kCap">CAPTURE<small>take this weight</small></button>
+          <button class="dk" id="kClr">CLEAR<small>drop captured</small></button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Bridge simulator</h2>
+        <p class="sub">Drive a vehicle on the bridge, wait for STABLE, then press CAPTURE. With a real indicator connected, this part is replaced by the live reading.</p>
+        <div class="bridge"><div class="veh" id="veh"></div><div class="deck" id="deck"></div></div>
+        <div class="ctrls">
+          <div class="row"><label for="load">Load</label><input type="range" id="load" min="0" max="100000" step="20" value="0"><input class="num" id="loadN" type="number" min="0" step="20" aria-label="Load in kg"><label>kg</label></div>
+          <div class="presets" id="presets"></div>
+          <div class="row"><button class="btn dan" id="offBridge">Vehicle off the bridge</button></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 style="font-size:.95rem;margin-bottom:6px">How a truck is weighed</h2>
+        <ol class="steps">
+          <li>Loaded truck comes on the bridge. Fill vehicle and driver details, CAPTURE, press <b>Save 1st weight</b>. The ticket waits as <b>pending</b>.</li>
+          <li>After unloading, the empty truck comes back. Pick its ticket from <b>Waiting for 2nd weight</b>, CAPTURE, press <b>Save 2nd weight</b>.</li>
+          <li>Gross, tare and net (load without vehicle) are worked out and the slip is ready. It also works the other way round: empty first, loaded later.</li>
+          <li>If the vehicle's empty weight is already on file, use <b>Stored tare</b> and finish in one trip.</li>
+          <li>For a car or bus that only needs its own weight, use <b>Single weighing</b>.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="card">
+        <div class="tabs" role="tablist" id="tabs">
+          <button role="tab" data-t="weigh">Weigh</button>
+          <button role="tab" data-t="recs">Records</button>
+          <button role="tab" data-t="rep">Report</button>
+          <button role="tab" data-t="set">Settings</button>
+        </div>
+        <div id="pane"></div>
+      </div>
+    </div>
+  </div>
+<footer class="s2c-foot"><span>&copy; 2026 <b>Soft2Cloud</b>. All rights reserved.</span><span class="s2c" title="Developed by Soft2Cloud"><svg viewBox="0 0 32 20" aria-hidden="true"><path d="M8 18a6 6 0 0 1-.8-11.95A8 8 0 0 1 22.6 5 6.5 6.5 0 1 1 24.5 18Z"/></svg><span><small>Developed by</small>Soft2Cloud</span></span></footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const LS='dharam-kanta.v1';
+const CAPS=[[30000,10],[60000,20],[80000,20],[100000,20],[120000,50],[150000,50]];
+const VT=[
+ {id:'car',n:'Car',fee:100},{id:'jeep',n:'Jeep / SUV',fee:150},{id:'pickup',n:'Pickup / Shehzore',fee:200},{id:'van',n:'Van / Hiace',fee:200},
+ {id:'bus',n:'Bus / Coaster',fee:400},{id:'tractor',n:'Tractor trolley',fee:300},{id:'truck',n:'Truck (6–10 wheel)',fee:500},{id:'trailer',n:'Trailer (12–22 wheel)',fee:800}];
+const ICON={
+ car:'<svg viewBox="0 0 64 28"><path class="body" d="M6 18 L10 10 Q12 7 16 7 L40 7 Q44 7 47 10 L53 15 L60 16 Q62 17 62 20 L62 22 L4 22 L4 20 Q4 18 6 18Z"/><path class="win" d="M14 10 L26 10 L26 15 L11 15Z M29 10 L40 10 L46 15 L29 15Z"/><circle class="wh" cx="16" cy="23" r="4.5"/><circle class="wh" cx="50" cy="23" r="4.5"/></svg>',
+ jeep:'<svg viewBox="0 0 64 28"><path class="body" d="M4 8 L46 8 L54 14 L61 15 L61 22 L3 22Z"/><path class="win" d="M8 10 L22 10 L22 14 L8 14Z M25 10 L42 10 L48 14 L25 14Z"/><circle class="wh" cx="15" cy="23" r="4.8"/><circle class="wh" cx="50" cy="23" r="4.8"/></svg>',
+ pickup:'<svg viewBox="0 0 64 28"><path class="body" d="M2 13 L34 13 L34 6 L46 6 L54 13 L62 14 L62 22 L2 22Z"/><path class="win" d="M37 8 L45 8 L50 13 L37 13Z"/><rect class="ld" x="4" y="9" width="28" height="4"/><circle class="wh" cx="13" cy="23" r="4.5"/><circle class="wh" cx="52" cy="23" r="4.5"/></svg>',
+ van:'<svg viewBox="0 0 64 28"><path class="body" d="M3 5 L48 5 Q52 5 55 9 L61 15 L61 22 L3 22Z"/><path class="win" d="M7 8 L17 8 L17 13 L7 13Z M20 8 L30 8 L30 13 L20 13Z M33 8 L43 8 L43 13 L33 13Z M46 8 L50 8 L55 13 L46 13Z"/><circle class="wh" cx="14" cy="23" r="4.5"/><circle class="wh" cx="51" cy="23" r="4.5"/></svg>',
+ bus:'<svg viewBox="0 0 64 28"><rect class="body" x="2" y="3" width="60" height="19" rx="3"/><path class="win" d="M5 6h8v6H5z M15 6h8v6h-8z M25 6h8v6h-8z M35 6h8v6h-8z M45 6h8v6h-8z M55 6h5v9h-5z"/><circle class="wh" cx="13" cy="23" r="4.5"/><circle class="wh" cx="50" cy="23" r="4.5"/></svg>',
+ tractor:'<svg viewBox="0 0 64 28"><rect class="ld" x="2" y="8" width="26" height="10" rx="1"/><rect class="body" x="30" y="6" width="10" height="10"/><path class="body" d="M40 11 L58 11 L60 18 L40 18Z"/><path class="win" d="M32 8h6v5h-6z"/><circle class="wh" cx="10" cy="22" r="4"/><circle class="wh" cx="20" cy="22" r="4"/><circle class="wh" cx="38" cy="20" r="7"/><circle class="wh" cx="56" cy="22" r="4"/></svg>',
+ truck:'<svg viewBox="0 0 64 28"><rect class="ld" x="2" y="3" width="42" height="15" rx="1"/><path class="body" d="M46 6 L55 6 L61 12 L61 20 L46 20Z"/><path class="win" d="M48 8 L54 8 L58 12 L48 12Z"/><rect class="body" x="2" y="18" width="44" height="3"/><circle class="wh" cx="10" cy="23" r="4"/><circle class="wh" cx="19" cy="23" r="4"/><circle class="wh" cx="53" cy="23" r="4"/></svg>',
+ trailer:'<svg viewBox="0 0 64 28"><rect class="ld" x="1" y="5" width="47" height="13" rx="1"/><path class="body" d="M50 7 L57 7 L62 12 L62 20 L50 20Z"/><path class="win" d="M52 9 L56 9 L60 13 L52 13Z"/><rect class="body" x="1" y="18" width="49" height="2.5"/><circle class="wh" cx="6" cy="23" r="3.5"/><circle class="wh" cx="14" cy="23" r="3.5"/><circle class="wh" cx="22" cy="23" r="3.5"/><circle class="wh" cx="41" cy="23" r="3.5"/><circle class="wh" cx="56" cy="23" r="3.5"/></svg>'};
+const PRESETS=[['Car','car',1340],['Jeep','jeep',2180],['Pickup empty','pickup',1880],['Pickup loaded','pickup',3260],['Coaster','bus',5400],['Bus','bus',12600],['Tractor trolley loaded','tractor',8640],['Truck empty','truck',9820],['Truck loaded','truck',26460],['Trailer empty','trailer',16900],['Trailer loaded','trailer',58240]];
+
+const DEF={name:'City Weighbridge',addr:'',phone:'',operator:'',capIdx:3,fees:Object.fromEntries(VT.map(v=>[v.id,v.fee])),nextNo:1};
+let S={cfg:JSON.parse(JSON.stringify(DEF)),recs:[],tares:{}};
+let saved=null;try{saved=JSON.parse(localStorage.getItem(LS)||'null')}catch(e){}
+if(saved&&saved.cfg){S=saved;S.cfg={...JSON.parse(JSON.stringify(DEF)),...S.cfg};S.cfg.fees={...DEF.fees,...S.cfg.fees};S.tares=S.tares||{};S.recs=S.recs||[]}
+else{seed();var seeded=true}
+function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
+function seed(){
+ const now=Date.now(),h=3600e3;
+ const mk=(o)=>({no:S.cfg.nextNo++,mob:'',party:'',mat:'',from:'',to:'',rem:'Example entry — delete when you start',fee:S.cfg.fees[o.vtype],...o});
+ S.recs.push(mk({vno:'LES-4521',vtype:'truck',driver:'Example: Muhammad Aslam',lic:'EX-1234567',party:'Example Rice Mills',mat:'Paddy',from:'Gujranwala',to:'Lahore',mode:'two',w1:{kg:27140,t:now-5*h},w2:{kg:9860,t:now-4.4*h},status:'done'}));
+ S.recs.push(mk({vno:'RIK-882',vtype:'bus',driver:'Example: Shahid Iqbal',lic:'EX-7654321',mode:'single',w1:{kg:12620,t:now-3*h},w2:null,status:'done'}));
+ S.recs.push(mk({vno:'FDA-3107',vtype:'trailer',driver:'Example: Gul Khan',lic:'EX-5550001',party:'Example Cement Co.',mat:'Cement bags',from:'Daudkhel',to:'Faisalabad',mode:'two',w1:{kg:58260,t:now-0.6*h},w2:null,status:'pending'}));
+ S.tares['LES-4521']={kg:9860,t:now-4.4*h};
+}
+
+const cap=()=>CAPS[S.cfg.capIdx][0], dv=()=>CAPS[S.cfg.capIdx][1];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const kg=n=>Number(n).toLocaleString('en-PK')+' kg';
+const maund=n=>(n/40).toLocaleString('en-PK',{maximumFractionDigits:2});
+const ton=n=>(n/1000).toLocaleString('en-PK',{minimumFractionDigits:2,maximumFractionDigits:2});
+const rs=n=>'Rs '+Number(n||0).toLocaleString('en-PK');
+const pad=n=>String(n).padStart(2,'0');
+const dt=t=>{const d=new Date(t);return `${pad(d.getDate())}-${pad(d.getMonth()+1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`};
+const slipNo=n=>String(n).padStart(5,'0');
+const vtn=id=>(VT.find(v=>v.id===id)||{n:id}).n;
+function calc(r){
+ if(r.mode==='single'||!r.w2)return {gross:r.w1.kg,tare:null,net:null};
+ const g=Math.max(r.w1.kg,r.w2.kg),t=Math.min(r.w1.kg,r.w2.kg);return {gross:g,tare:t,net:g-t};
+}
+
+/* ---------- seven segment ---------- */
+const SEG={'0':'abcdef','1':'bc','2':'abged','3':'abgcd','4':'fgbc','5':'afgcd','6':'afgedc','7':'abc','8':'abcdefg','9':'abcdfg','-':'g',' ':'','O':'abcdef','L':'fed','E':'afged','r':'eg'};
+const R={a:[4,0,22,5],b:[25,3,5,23],c:[25,28,5,23],d:[4,49,22,5],e:[0,28,5,23],f:[0,3,5,23],g:[4,24.5,22,5]};
+function seg7(str,cells){
+ const ch=[...String(str)].slice(-cells);while(ch.length<cells)ch.unshift(' ');
+ const W=38;let s=`<svg class="seg" viewBox="0 0 ${cells*W+4} 56">`;
+ ch.forEach((c,i)=>{const on=SEG[c]||'';s+=`<g transform="translate(${i*W+8},1) skewX(-6)">`;
+  for(const k of 'abcdefg'){const r=R[k];s+=`<rect x="${r[0]}" y="${r[1]}" width="${r[2]}" height="${r[3]}" rx="2" class="${on.includes(k)?'on':'off'}"/>`}s+='</g>'});
+ return s+'</svg>';
+}
+
+/* ---------- bridge physics ---------- */
+const L={load:0,vtype:null,zero:0,shown:0,from:0,target:0,start:0,stable:true,cap:null};
+function physics(now){
+ const target=L.load;
+ if(target!==L.target){L.from=L.shown;L.target=target;L.start=now}
+ const dur=700+Math.min(1600,Math.abs(target-L.from)/cap()*3000);
+ const t=(now-L.start)/dur;
+ if(t<1){L.shown=target+(L.from-target)*Math.exp(-4.5*t)*Math.cos(t*11)+(Math.random()-.5)*dv()*8*(1-t);L.stable=false}
+ else{L.shown=target;L.stable=true}
+}
+function reading(){
+ const g=L.shown-L.zero;let q=Math.round(g/dv())*dv();if(Math.abs(q)<dv())q=0;
+ return {q,ol:g>cap()+9*dv(),stable:L.stable};
+}
+let lastKey='';
+function tick(){
+ physics(performance.now());
+ const r=reading();
+ const str=r.ol?'-OL-':String(r.q);
+ if(str!==lastKey){$('wDisp').innerHTML=seg7(str,7);lastKey=str;
+  $('conv').innerHTML=r.ol?'<span>Overload: vehicle exceeds bridge capacity</span>':`<span>${ton(r.q)} ton</span><span>${maund(r.q)} maund</span>`}
+ const lamps=[['Stable',r.stable&&!r.ol,'g'],['Zero',Math.abs(r.q)<dv(),''],['Motion',!r.stable,''],['Overload',r.ol,'r'],['Captured '+(L.cap?kg(L.cap.kg):''),!!L.cap,'']];
+ const lh=lamps.map(([t,on,c])=>`<span class="${on?'lit '+c:''}">${t}</span>`).join('');
+ if($('lamps').dataset.h!==lh){$('lamps').innerHTML=lh;$('lamps').dataset.h=lh}
+ $('deck').style.transform=`translateY(${Math.min(5,L.load/cap()*6)}px)`;
+}
+
+/* ---------- simulator controls ---------- */
+function setLoad(v,vt){L.load=Math.max(0,Math.min(Math.round(v/dv())*dv(),Math.round(cap()*1.08)));if(vt!==undefined)L.vtype=vt;if(L.load===0)L.vtype=null;
+ $('load').value=L.load;$('loadN').value=L.load||'';
+ $('veh').innerHTML=L.vtype?ICON[L.vtype]+`<span>${vtn(L.vtype)}</span>`:(L.load?'<span>Load on bridge</span>':'');}
+function buildSim(){
+ $('load').max=Math.round(cap()*1.08);$('load').step=dv();$('loadN').step=dv();
+ $('presets').innerHTML=PRESETS.map((p,i)=>`<button class="btn" data-p="${i}">${p[0]}<span class="w">${kg(p[2])}</span></button>`).join('');
+ $('pMax').textContent=kg(cap());$('pD').textContent=dv()+' kg';
+}
+$('presets').addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(!b)return;const p=PRESETS[+b.dataset.p];setLoad(p[2],p[1]);
+ if(F.mode!=='second'&&!F.vtype){F.vtype=p[1];if(S.tab==='weigh')renderPane()}});
+$('load').addEventListener('input',e=>setLoad(+e.target.value));
+$('loadN').addEventListener('input',e=>setLoad(+e.target.value||0));
+$('offBridge').addEventListener('click',()=>setLoad(0,null));
+$('kZero').addEventListener('click',()=>{const r=reading();if(!r.stable)return;if(Math.abs(L.shown-L.zero)<=0.02*cap())L.zero=L.shown;});
+$('kCap').addEventListener('click',()=>capture());
+$('kClr').addEventListener('click',()=>{L.cap=null;if(S.tab==='weigh')renderPane()});
+function capture(){
+ const r=reading();
+ if(r.ol){flashMsg('err','Overload. The vehicle is heavier than the bridge capacity.');return}
+ if(!r.stable){flashMsg('err','Weight is still moving. Wait for the STABLE lamp, then capture.');return}
+ if(r.q<20*dv()){flashMsg('err','Bridge is empty. Drive the vehicle on first.');return}
+ L.cap={kg:r.q,t:Date.now()};S.tab='weigh';renderPane();
+}
+
+/* ---------- form state ---------- */
+const BLANK={vno:'',vtype:'',driver:'',lic:'',mob:'',party:'',mat:'',from:'',to:'',rem:''};
+const F={mode:'two',sel:null,...BLANK,msg:null,bad:[]};
+S.tab='weigh';let lastSlip=null,viewSlip=null,confirmDel=null,q='',qStatus='all';
+function flashMsg(type,text){F.msg={type,text};if(S.tab!=='weigh'){S.tab='weigh'}renderPane()}
+function pending(){return S.recs.filter(r=>r.status==='pending')}
+function fillFrom(r){Object.keys(BLANK).forEach(k=>F[k]=r[k]??'')}
+function readForm(){Object.keys(BLANK).forEach(k=>{const el=$('f_'+k);if(el)F[k]=el.value.trim()});F.vno=F.vno.toUpperCase()}
+function validate(){
+ const bad=[];if(!F.vno)bad.push('vno');if(!F.vtype)bad.push('vtype');if(!F.driver)bad.push('driver');if(!F.lic)bad.push('lic');
+ F.bad=bad;if(bad.length){F.msg={type:'err',text:'Fill the required fields: '+bad.map(b=>({vno:'vehicle number',vtype:'vehicle type',driver:'driver name',lic:'licence number'}[b])).join(', ')+'.'};return false}
+ if(!L.cap){F.msg={type:'err',text:'No weight captured. Wait for STABLE and press CAPTURE.'};return false}
+ return true;
+}
+function newRec(extra){
+ const r={no:S.cfg.nextNo++,...Object.fromEntries(Object.keys(BLANK).map(k=>[k,F[k]])),fee:S.cfg.fees[F.vtype]||0,...extra};
+ S.recs.push(r);return r;
+}
+function resetForm(keepMode){Object.assign(F,BLANK,{sel:null,bad:[]});if(!keepMode)F.mode='two';L.cap=null}
+function finish(r){if(r.mode==='two'&&r.w2){const c=calc(r);S.tares[r.vno]={kg:c.tare,t:Date.now()}}
+ lastSlip=r.no;viewSlip=null;save();}
+function act(kind){
+ readForm();F.msg=null;
+ if(kind==='first'){if(!validate())return renderPane();const r=newRec({mode:'two',w1:{...L.cap},w2:null,status:'pending'});save();
+  const m=`Slip ${slipNo(r.no)} saved as pending with 1st weight ${kg(r.w1.kg)}. Weigh it again after loading or unloading.`;resetForm(true);F.msg={type:'ok',text:m};lastSlip=r.no}
+ else if(kind==='single'){if(!validate())return renderPane();const r=newRec({mode:'single',w1:{...L.cap},w2:null,status:'done'});finish(r);resetForm(true);F.msg={type:'ok',text:`Slip ${slipNo(r.no)} completed.`}}
+ else if(kind==='tare'){if(!validate())return renderPane();const st=S.tares[F.vno];if(!st)return;
+  if(Math.abs(L.cap.kg-st.kg)<20*dv()){F.msg={type:'err',text:'Captured weight equals the stored tare. Weigh the vehicle with its load.'};return renderPane()}
+  const r=newRec({mode:'two',w1:{...L.cap},w2:{kg:st.kg,t:st.t,stored:true},status:'done'});finish(r);resetForm(true);F.msg={type:'ok',text:`Slip ${slipNo(r.no)} completed using stored tare.`}}
+ else if(kind==='second'){const r=S.recs.find(x=>x.no===F.sel);if(!r)return;
+  ['vno','driver','lic'].forEach(k=>{if(!F[k])F.bad.push(k)});
+  if(!L.cap){F.msg={type:'err',text:'No weight captured. Wait for STABLE and press CAPTURE.'};return renderPane()}
+  if(Math.abs(L.cap.kg-r.w1.kg)<20*dv()){F.msg={type:'err',text:`Second weight is the same as the first (${kg(r.w1.kg)}). Unload or load the vehicle first.`};return renderPane()}
+  Object.keys(BLANK).forEach(k=>r[k]=F[k]);r.fee=S.cfg.fees[r.vtype]||r.fee;r.w2={...L.cap};r.status='done';finish(r);resetForm();F.msg={type:'ok',text:`Slip ${slipNo(r.no)} completed. Net load ${kg(calc(r).net)}.`}}
+ renderPane();
+}
+
+/* ---------- slip ---------- */
+function slipText(r){
+ const W=40,line='-'.repeat(W),dl='='.repeat(W);
+ const C=s=>{s=String(s);return ' '.repeat(Math.max(0,Math.floor((W-s.length)/2)))+s};
+ const LR=(a,b)=>{a=String(a);b=String(b);return a+' '.repeat(Math.max(1,W-a.length-b.length))+b};
+ const KV=(k,v)=>v?(k.padEnd(13)+': '+v):null;
+ const c=calc(r);const o=[C(S.cfg.name.toUpperCase())];
+ if(S.cfg.addr)o.push(C(S.cfg.addr));if(S.cfg.phone)o.push(C('Ph: '+S.cfg.phone));
+ o.push(dl,C('WEIGHMENT SLIP'),LR('Slip No: '+slipNo(r.no),r.status==='pending'?'PENDING':(r.mode==='single'?'SINGLE':'FINAL')),line);
+ [KV('Vehicle No',r.vno),KV('Vehicle Type',vtn(r.vtype)),KV('Driver',r.driver),KV('Licence No',r.lic),KV('Driver Mobile',r.mob),KV('Party',r.party),KV('Material',r.mat),KV('From',r.from),KV('To',r.to)].forEach(x=>x&&o.push(x));
+ o.push(line);
+ if(r.mode==='single'){o.push(LR('Weight',kg(r.w1.kg)),LR('',ton(r.w1.kg)+' t / '+maund(r.w1.kg)+' maund'),LR('Date/Time',dt(r.w1.t)))}
+ else if(!r.w2){o.push(LR('1st Weight',kg(r.w1.kg)),LR('Date/Time',dt(r.w1.t)),LR('2nd Weight','awaiting'))}
+ else{
+  const gT=r.w1.kg>=r.w2.kg?r.w1:r.w2,tT=r.w1.kg>=r.w2.kg?r.w2:r.w1;
+  o.push(LR('Gross (with load)',kg(c.gross)),LR('  at',dt(gT.t)),LR('Tare (empty)'+(tT.stored?' *stored':''),kg(c.tare)),LR('  at',dt(tT.t)),line,
+   LR('NET LOAD',kg(c.net)),LR('',ton(c.net)+' t / '+maund(c.net)+' maund'));
+ }
+ o.push(line,LR('Weighing fee',rs(r.fee)));
+ if(r.rem)o.push('Remarks: '+r.rem);
+ o.push(dl,'','Operator: '+(S.cfg.operator||'__________')+'   Driver sign: ________','',C('Computer generated slip'),C('Software by Soft2Cloud'));
+ return o.join('\n');
+}
+
+/* ---------- rendering ---------- */
+$('tabs').addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(!b)return;if(S.tab==='weigh')readForm();S.tab=b.dataset.t;confirmDel=null;renderPane()});
+function renderHeader(){$('hName').textContent=S.cfg.name;$('hOp').textContent=S.cfg.operator?'Operator: '+S.cfg.operator:'';
+ const n=pending().length;
+ document.querySelectorAll('#tabs [data-t]').forEach(b=>{b.setAttribute('aria-selected',b.dataset.t===S.tab);if(b.dataset.t==='weigh')b.innerHTML='Weigh'+(n?`<span class="cnt">${n}</span>`:'')})}
+function field(k,label,opt={}){const req=opt.req?' <span class="req">*</span>':'';
+ return `<div class="f${opt.full?' full':''}"><label for="f_${k}">${label}${req}</label>${opt.area?`<textarea id="f_${k}">${esc(F[k])}</textarea>`:`<input id="f_${k}" value="${esc(F[k])}" ${opt.ph?`placeholder="${opt.ph}"`:''} ${opt.attr||''} class="${F.bad.includes(k)?'bad':''}" autocomplete="off">`}</div>`}
+function renderWeigh(){
+ const pend=pending();let h='';
+ h+=`<div class="mode" role="group" aria-label="Weighing type">
+  <button data-m="two" aria-pressed="${F.mode==='two'}">Two weighings (loaded + empty)</button>
+  <button data-m="single" aria-pressed="${F.mode==='single'}">Single weighing</button>
+  <button data-m="second" aria-pressed="${F.mode==='second'}" ${pend.length?'':'disabled'}>2nd weight of pending ticket</button></div>`;
+ if(F.mode==='second'){
+  h+=`<div class="pendbar"><b>Waiting for 2nd weight:</b>`+pend.map(r=>`<button class="pchip" data-sel="${r.no}" aria-pressed="${F.sel===r.no}">${esc(r.vno)} · ${kg(r.w1.kg)}</button>`).join('')+`</div>`;
+  if(!F.sel)h+=`<div class="empty">Pick the vehicle that has come back for its second weighing.</div>`;
+ }
+ const sel=F.sel?S.recs.find(r=>r.no===F.sel):null;
+ if(F.mode!=='second'||sel){
+  h+=`<div class="sect"><fieldset><legend>Vehicle</legend><div class="form">${field('vno','Vehicle number',{req:1,ph:'e.g. LES-4521',attr:'style="text-transform:uppercase"'})}
+   <div class="f full"><label>Vehicle type <span class="req">*</span></label><div class="vtypes${F.bad.includes('vtype')?' bad':''}" id="vtypes">${VT.map(v=>`<button class="vt" data-vt="${v.id}" aria-pressed="${F.vtype===v.id}">${ICON[v.id]}<span>${v.n}</span></button>`).join('')}</div></div></div></fieldset>
+   <fieldset><legend>Driver</legend><div class="form">${field('driver','Driver name',{req:1})}${field('lic','Driving licence number',{req:1})}${field('mob','Driver mobile',{ph:'03xx-xxxxxxx',attr:'inputmode="tel"'})}</div></fieldset>
+   <fieldset><legend>Load details</legend><div class="form">${field('party','Party / customer')}${field('mat','Material / goods',{ph:'e.g. wheat, cement, sand'})}${field('from','From')}${field('to','To')}${field('rem','Remarks',{full:1,area:1})}</div></fieldset></div>`;
+  // weights
+  if(sel){const fee=S.cfg.fees[F.vtype]||sel.fee;
+   h+=`<div class="weights" style="margin-top:14px"><div class="wbox"><span>1st weight</span><b>${kg(sel.w1.kg)}</b><small>${dt(sel.w1.t)}</small></div>
+   <div class="wbox"><span>2nd weight</span><b>${L.cap?kg(L.cap.kg):'—'}</b><small>${L.cap?'captured now':'capture on the indicator'}</small></div>
+   <div class="wbox net"><span>Net load</span><b>${L.cap?kg(Math.abs(L.cap.kg-sel.w1.kg)):'—'}</b><small>without vehicle · fee ${rs(fee)}</small></div></div>`}
+  else{
+   h+=`<div class="captured"><span class="note">Captured weight</span><b>${L.cap?kg(L.cap.kg):'—'}</b>${L.cap?`<span class="note">${ton(L.cap.kg)} t · ${maund(L.cap.kg)} maund</span>`:'<span class="note">Wait for STABLE, then press CAPTURE on the indicator.</span>'}</div>`;
+   const vno=(F.vno||'').toUpperCase();const st=S.tares[vno];
+   if(F.mode==='two'&&st)h+=`<p class="note" style="margin:8px 0 0">Stored tare for ${esc(vno)}: <b>${kg(st.kg)}</b> (${dt(st.t)}).${L.cap?` Net would be <b>${kg(Math.abs(L.cap.kg-st.kg))}</b>.`:''}</p>`;
+  }
+  h+=`<div class="actions">`;
+  if(F.mode==='two'){h+=`<button class="btn pri big" data-a="first">Save 1st weight</button>`;const st=S.tares[(F.vno||'').toUpperCase()];if(st)h+=`<button class="btn big" data-a="tare">Complete with stored tare</button>`}
+  if(F.mode==='single')h+=`<button class="btn pri big" data-a="single">Save weight &amp; make slip</button>`;
+  if(sel)h+=`<button class="btn pri big" data-a="second">Save 2nd weight &amp; make slip</button>`;
+  h+=`<button class="btn big" data-a="reset">Clear form</button></div>`;
+ }
+ if(F.msg)h+=`<div class="msg ${F.msg.type}" role="status">${esc(F.msg.text)}</div>`;
+ const sr=S.recs.find(r=>r.no===(viewSlip??lastSlip));
+ if(sr)h+=`<div class="slipWrap"><div class="row" style="justify-content:space-between"><b>Slip ${slipNo(sr.no)}</b><button class="btn" id="copySlip">Copy slip</button></div><pre class="slip" id="slipTxt">${esc(slipText(sr))}</pre></div>`;
+ return h;
+}
+function renderRecs(){
+ const ql=q.toLowerCase();
+ const list=S.recs.filter(r=>(qStatus==='all'||r.status===qStatus)&&(!ql||[r.vno,r.driver,r.lic,r.party,r.mat,slipNo(r.no)].some(x=>String(x||'').toLowerCase().includes(ql)))).sort((a,b)=>b.no-a.no);
+ let h=`<div class="filters"><input id="q" type="search" placeholder="Search vehicle, driver, licence, party, slip no." value="${esc(q)}" aria-label="Search records"><select id="qs" aria-label="Status"><option value="all" ${qStatus==='all'?'selected':''}>All</option><option value="pending" ${qStatus==='pending'?'selected':''}>Pending</option><option value="done" ${qStatus==='done'?'selected':''}>Completed</option></select></div>`;
+ if(!list.length)return h+`<div class="empty">No records match.</div>`;
+ h+=`<div class="tbl-wrap"><table><thead><tr><th>Slip</th><th>Vehicle</th><th>Driver · Licence</th><th class="r">Gross</th><th class="r">Tare</th><th class="r">Net</th><th>Status</th><th></th></tr></thead><tbody>`+
+ list.map(r=>{const c=calc(r);return `<tr><td>${slipNo(r.no)}<small>${dt(r.w1.t)}</small></td><td><b>${esc(r.vno)}</b><small>${esc(vtn(r.vtype))}</small></td><td>${esc(r.driver)}<small>${esc(r.lic)}</small></td>
+  <td class="r">${kg(c.gross)}</td><td class="r">${c.tare!=null?kg(c.tare):'—'}</td><td class="r">${c.net!=null?'<b>'+kg(c.net)+'</b>':'—'}</td>
+  <td><span class="pill ${r.status==='pending'?'p':'d'}">${r.status==='pending'?'Pending':(r.mode==='single'?'Single':'Done')}</span></td>
+  <td class="r" style="white-space:nowrap">${r.status==='pending'?`<button class="btn" data-w2="${r.no}">2nd weight</button>`:`<button class="btn" data-vs="${r.no}">Slip</button>`} ${confirmDel===r.no?`<button class="btn dan" data-dy="${r.no}">Delete?</button><button class="btn" data-dn="1">No</button>`:`<button class="btn dan" data-del="${r.no}" aria-label="Delete slip ${slipNo(r.no)}">×</button>`}</td></tr>`}).join('')+`</tbody></table></div>`;
+ return h;
+}
+function renderRep(){
+ const sel=$('repDay')?.value||new Date().toISOString().slice(0,10);
+ const same=t=>{const d=new Date(t);return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`===sel};
+ const day=S.recs.filter(r=>r.status==='done'&&same((r.w2&&!r.w2.stored?r.w2.t:r.w1.t)));
+ const net=day.reduce((a,r)=>a+(calc(r).net||0),0),fees=day.reduce((a,r)=>a+(+r.fee||0),0);
+ let h=`<div class="filters"><label class="note" for="repDay" style="align-self:center">Day</label><input type="date" id="repDay" value="${sel}" style="flex:0 1 180px"></div>
+ <div class="kv"><div><span>Vehicles weighed</span><b>${day.length}</b></div><div><span>Net load</span><b>${ton(net)} t</b></div><div><span>Fees collected</span><b>${rs(fees)}</b></div><div><span>Pending now</span><b>${pending().length}</b></div></div>`;
+ const by={};day.forEach(r=>{const k=r.vtype;by[k]=by[k]||{n:0,net:0,fee:0};by[k].n++;by[k].net+=calc(r).net||0;by[k].fee+=+r.fee||0});
+ const rows=VT.filter(v=>by[v.id]);
+ if(rows.length)h+=`<h3 style="font-size:.85rem;margin:16px 0 6px">By vehicle type</h3><div class="tbl-wrap"><table><thead><tr><th>Type</th><th class="r">Vehicles</th><th class="r">Net load</th><th class="r">Fees</th></tr></thead><tbody>`+rows.map(v=>`<tr><td>${v.n}</td><td class="r">${by[v.id].n}</td><td class="r">${by[v.id].net?kg(by[v.id].net):'—'}</td><td class="r">${rs(by[v.id].fee)}</td></tr>`).join('')+`</tbody></table></div>`;
+ else h+=`<div class="empty" style="margin-top:14px">No completed weighings on this day.</div>`;
+ return h;
+}
+function renderSet(){
+ const c=S.cfg;
+ return `<div class="set"><h3>Weighbridge</h3>
+ <label for="sName">Weighbridge name<small>Printed on every slip</small></label><input id="sName" value="${esc(c.name)}">
+ <label for="sAddr">Address</label><input id="sAddr" value="${esc(c.addr)}">
+ <label for="sPhone">Phone</label><input id="sPhone" value="${esc(c.phone)}">
+ <label for="sOp">Operator name</label><input id="sOp" value="${esc(c.operator)}">
+ <label for="sCap">Bridge capacity<small>Sets max weight and division</small></label><select id="sCap">${CAPS.map((x,i)=>`<option value="${i}" ${i===c.capIdx?'selected':''}>${x[0]/1000} ton · d = ${x[1]} kg</option>`).join('')}</select>
+ <hr><h3>Weighing fee by vehicle type (Rs) — example rates, set your own</h3>
+ ${VT.map(v=>`<label for="fee_${v.id}">${v.n}</label><input id="fee_${v.id}" type="number" min="0" step="10" data-fee="${v.id}" value="${c.fees[v.id]}">`).join('')}
+ <hr><h3>Stored tares</h3>
+ <label>Vehicles with an empty weight on file<small>${Object.keys(S.tares).length? Object.entries(S.tares).map(([k,v])=>esc(k)+' '+kg(v.kg)).join(' · '):'None yet. Saved automatically after every two-weighing slip.'}</small></label><button class="btn dan" id="clrTares" ${Object.keys(S.tares).length?'':'disabled'}>Clear</button>
+ <hr><h3>Data</h3>
+ <label>All records<small>${S.recs.length} slips saved in this browser on this computer</small></label>${confirmDel==='all'?`<span class="confirm"><button class="btn dan" id="wipeYes">Delete all</button><button class="btn" id="wipeNo">Cancel</button></span>`:`<button class="btn dan" id="wipe">Delete all records</button>`}
+ </div>`;
+}
+function renderPane(){
+ renderHeader();
+ const p=$('pane');
+ p.innerHTML=S.tab==='weigh'?renderWeigh():S.tab==='recs'?renderRecs():S.tab==='rep'?renderRep():renderSet();
+ wire();
+}
+function wire(){
+ const p=$('pane'),on=(id,ev,fn)=>{const el=$(id);if(el)el.addEventListener(ev,fn)};
+ p.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{readForm();F.mode=b.dataset.m;F.sel=null;F.msg=null;F.bad=[];if(F.mode==='second')Object.assign(F,BLANK);renderPane()});
+ p.querySelectorAll('[data-sel]').forEach(b=>b.onclick=()=>{F.sel=+b.dataset.sel;const r=S.recs.find(x=>x.no===F.sel);fillFrom(r);F.msg=null;F.bad=[];renderPane()});
+ p.querySelectorAll('[data-vt]').forEach(b=>b.onclick=()=>{readForm();F.vtype=b.dataset.vt;F.bad=F.bad.filter(x=>x!=='vtype');renderPane()});
+ p.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{const a=b.dataset.a;if(a==='reset'){resetForm(true);F.msg=null;renderPane()}else act(a)});
+ on('f_vno','change',()=>{readForm();renderPane()});
+ on('copySlip','click',()=>{const t=$('slipTxt').textContent,btn=$('copySlip');
+  const sel=()=>{const r=document.createRange();r.selectNodeContents($('slipTxt'));const s=getSelection();s.removeAllRanges();s.addRange(r);btn.textContent='Selected — press Ctrl+C'};
+  try{navigator.clipboard.writeText(t).then(()=>btn.textContent='Copied',sel)}catch(e){sel()}});
+ // records
+ on('q','input',e=>{q=e.target.value;const pos=e.target.selectionStart;renderPane();const n=$('q');n.focus();n.setSelectionRange(pos,pos)});
+ on('qs','change',e=>{qStatus=e.target.value;renderPane()});
+ p.querySelectorAll('[data-vs]').forEach(b=>b.onclick=()=>{viewSlip=+b.dataset.vs;S.tab='weigh';renderPane()});
+ p.querySelectorAll('[data-w2]').forEach(b=>b.onclick=()=>{F.mode='second';F.sel=+b.dataset.w2;fillFrom(S.recs.find(x=>x.no===F.sel));F.msg=null;S.tab='weigh';renderPane()});
+ p.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{confirmDel=+b.dataset.del;renderPane()});
+ p.querySelectorAll('[data-dn]').forEach(b=>b.onclick=()=>{confirmDel=null;renderPane()});
+ p.querySelectorAll('[data-dy]').forEach(b=>b.onclick=()=>{const n=+b.dataset.dy;S.recs=S.recs.filter(r=>r.no!==n);if(lastSlip===n)lastSlip=null;if(viewSlip===n)viewSlip=null;if(F.sel===n){F.sel=null}confirmDel=null;save();renderPane()});
+ // report
+ on('repDay','change',()=>renderPane());
+ // settings
+ const sv=(id,k)=>on(id,'change',e=>{S.cfg[k]=e.target.value.trim();if(k==='name'&&!S.cfg.name)S.cfg.name='Weighbridge';save();renderHeader()});
+ sv('sName','name');sv('sAddr','addr');sv('sPhone','phone');sv('sOp','operator');
+ on('sCap','change',e=>{S.cfg.capIdx=+e.target.value;L.zero=0;buildSim();setLoad(L.load,L.vtype);lastKey='';save();renderPane()});
+ p.querySelectorAll('[data-fee]').forEach(i=>i.onchange=()=>{S.cfg.fees[i.dataset.fee]=Math.max(0,+i.value||0);save()});
+ on('clrTares','click',()=>{S.tares={};save();renderPane()});
+ on('wipe','click',()=>{confirmDel='all';renderPane()});
+ on('wipeNo','click',()=>{confirmDel=null;renderPane()});
+ on('wipeYes','click',()=>{S.recs=[];S.tares={};lastSlip=viewSlip=null;F.sel=null;confirmDel=null;save();renderPane()});
+}
+
+buildSim();setLoad(26460,'truck');
+if(typeof seeded!=='undefined')lastSlip=1;
+F.vtype='truck';
+L.shown=0;L.start=performance.now();
+renderPane();
+setInterval(tick,80);tick();
+})();
+</script>
+
+</body></html>
