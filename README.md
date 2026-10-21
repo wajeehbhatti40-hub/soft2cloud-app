@@ -2,16 +2,15 @@
 
 Live demos of Soft2Cloud business software. Every app runs in the browser with sample data; nothing to install.
 
-**Demo page:** https://wajeehbhatti40-hub.github.io/soft2cloud-app/
+**Demo page:** https://demo.soft2cloud.com/
 
 | App | Demo link |
 |---|---|
-| VenueDesk (event hall booking) | https://wajeehbhatti40-hub.github.io/soft2cloud-app/venuedesk/ |
-| Mart POS (supermarket billing) | https://wajeehbhatti40-hub.github.io/soft2cloud-app/mart-pos/ |
-| Weighbridge (dharam kanta) | https://wajeehbhatti40-hub.github.io/soft2cloud-app/weighbridge/ |
-| Computer Kanda (price scale) | https://wajeehbhatti40-hub.github.io/soft2cloud-app/computer-kanda/ |
-| School Portal | https://wajeehbhatti40-hub.github.io/soft2cloud-app/school-portal/ |
-| Soft2Cloud Website | https://wajeehbhatti40-hub.github.io/soft2cloud-app/website/ |
+| VenueDesk (event hall booking) | https://demo.soft2cloud.com/venuedesk/ |
+| Mart POS (supermarket billing) | https://demo.soft2cloud.com/mart-pos/ |
+| Weighbridge (dharam kanta) | https://demo.soft2cloud.com/weighbridge/ |
+| Computer Kanda (price scale) | https://demo.soft2cloud.com/computer-kanda/ |
+| School Management System | https://demo.soft2cloud.com/school-management-system/ |
 
 Demo versions only: data stays in the visitor's browser. Full versions come with a licence key, online data and setup.
 

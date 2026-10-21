@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Soft2Cloud Software Demos</title>
-<meta name="description" content="Live demos of Soft2Cloud business software: event hall booking, supermarket POS, weighbridge, computer scale and school management.">
+<meta name="description" content="Live demos of Soft2Cloud business software: event hall booking, supermarket POS, weighbridge, computer scale and school management system.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
@@ -102,13 +102,10 @@ const APPS = [
   {path:'computer-kanda/', icon:'scale', name:'Computer Kanda', for:'Sabzi, fruit, meat and grocery shops',
    about:'Electronic price-computing scale with billing.',
    points:['Weight × price on front and rear displays','PLU products with Urdu names and hot keys','Tare, piece counting and check-weighing','Receipts and daily sales report']},
-  {path:'school-portal/', icon:'school', name:'School Portal', for:'Schools, academies, colleges',
+  {path:'school-management-system/', icon:'school', name:'School Management System', for:'Schools, academies, colleges',
    about:'The whole school in one app.',
    points:['Principal, accountant, teacher, parent and student','Attendance, homework, marks and report cards','Fees with receipts and defaulter reminders','Excel import for a whole class in a minute'],
-   login:'On the page, press <b>Open the live demo</b> to use the sample class.'},
-  {path:'website/', icon:'globe', name:'Soft2Cloud Website', for:'About us',
-   about:'Our company site with all our software.',
-   points:['Every Soft2Cloud product in one place','Services and contact details']}
+   login:'On the page, press <b>Open the live demo</b>, then <b>Use the offline demo</b>. Demo PINs: teacher <b>1234</b> · student <b>1111</b>'}
 ];
 const base = location.href.replace(/[#?].*$/, '').replace(/index\.html$/, '');
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
