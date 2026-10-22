@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Soft2Cloud Software Demos</title>
+<link rel="icon" href="assets/icons/png/soft2cloud-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="assets/icons/soft2cloud.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icons/png/soft2cloud-180.png">
 <meta name="description" content="Live demos of Soft2Cloud business software: event hall booking, supermarket POS, weighbridge, computer scale and school management system.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -53,6 +56,7 @@ footer .cols{display:flex;flex-wrap:wrap;gap:20px 40px;justify-content:space-bet
 footer b{color:var(--ink)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#0f1a2c;color:#fff;padding:9px 16px;border-radius:9px;font-weight:600;font-size:.9rem}
 @media (max-width:420px){.grid{grid-template-columns:minmax(0,1fr)}}
+.appicon{flex:none;border-radius:23%;box-shadow:0 8px 18px rgba(15,26,44,.18)}
 </style>
 </head>
 <body>
@@ -113,7 +117,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':
 document.getElementById('apps').innerHTML = APPS.map((a, i) => {
   const url = base + a.path;
   const wa = 'https://wa.me/?text=' + encodeURIComponent('Try ' + a.name + ' by Soft2Cloud, live demo: ' + url);
-  return '<article class="card"><div class="top"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + I[a.icon] + '</svg></span><div><h2>' + esc(a.name) + '</h2><div class="for">' + esc(a.for) + '</div></div></div>' +
+  return '<article class="card"><div class="top"><img class="appicon" src="assets/icons/' + a.path.replace(/\/$/, '') + '.svg" width="52" height="52" alt="" aria-hidden="true"><div><h2>' + esc(a.name) + '</h2><div class="for">' + esc(a.for) + '</div></div></div>' +
     '<p>' + esc(a.about) + '</p><ul>' + a.points.map(p => '<li>' + esc(p) + '</li>').join('') + '</ul>' +
     (a.login ? '<div class="login">' + a.login + '</div>' : '') +
     '<div class="actions"><a class="btn primary" href="' + a.path + '">Open live demo</a>' +
