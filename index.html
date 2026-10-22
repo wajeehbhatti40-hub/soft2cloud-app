@@ -61,6 +61,7 @@ footer b{color:var(--ink)}
     <div class="brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.4 9.2 4.5 4.5 0 0 0 7 18z"/></svg></span>Soft2Cloud</div>
     <h1>Business software you can try right now.</h1>
     <p class="lede">Open any app below and use it with sample data. Nothing to install, nothing to sign up for. What you enter stays in your own browser.</p>
+    <p style="margin:14px 0 0"><a href="https://soft2cloud.com/" style="color:inherit">← Visit the Soft2Cloud website</a></p>
     <div class="chips"><span>Urdu &amp; English</span><span>Works on phone and PC</span><span>Built in Lahore</span><span>Licence per business</span></div>
   </div>
 </header>
@@ -73,7 +74,7 @@ footer b{color:var(--ink)}
 <footer>
   <div class="wrap cols">
     <div><b>Soft2Cloud</b><br>New Liberty Tower, Model Town Link Road, Lahore</div>
-    <div>Email: <b>info@soft2cloud.com</b><br>Website: <b>soft2cloud.com</b></div>
+    <div>Email: <a href="mailto:info@soft2cloud.com"><b>info@soft2cloud.com</b></a><br>WhatsApp: <a href="https://wa.me/923706353528"><b>0370 6353528</b></a><br>Website: <a href="https://soft2cloud.com/"><b>soft2cloud.com</b></a> · <a href="https://soft2cloud.com/tools/">Free business tools</a></div>
     <div>&copy; 2026 Soft2Cloud. All rights reserved.</div>
   </div>
 </footer>
@@ -116,6 +117,7 @@ document.getElementById('apps').innerHTML = APPS.map((a, i) => {
     '<p>' + esc(a.about) + '</p><ul>' + a.points.map(p => '<li>' + esc(p) + '</li>').join('') + '</ul>' +
     (a.login ? '<div class="login">' + a.login + '</div>' : '') +
     '<div class="actions"><a class="btn primary" href="' + a.path + '">Open live demo</a>' +
+    '<a class="btn" href="https://soft2cloud.com/software/' + a.path + '">Features &amp; quote</a>' +
     '<button class="btn" data-copy="' + esc(url) + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>Copy link</button>' +
     '<a class="btn wa" target="_blank" rel="noopener" href="' + wa + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20l1.3-4A8 8 0 1 1 8 18.7z"/></svg>Share</a></div></article>';
 }).join('');

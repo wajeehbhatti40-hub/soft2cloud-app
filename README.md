@@ -2,11 +2,12 @@
 
 Live demos of Soft2Cloud business software. Every app runs in the browser with sample data; nothing to install.
 
-**Demo page:** https://demo.soft2cloud.com/
+**Demo page:** https://demo.soft2cloud.com/  
+**Company website:** https://soft2cloud.com/ · [Free business tools](https://soft2cloud.com/tools/)
 
 | App | Demo link |
 |---|---|
-| VenueDesk (event hall booking) | https://demo.soft2cloud.com/venuedesk/ |
+| VenueDesk ([features](https://soft2cloud.com/software/venuedesk/)) | https://demo.soft2cloud.com/venuedesk/ |
 | Mart POS (supermarket billing) | https://demo.soft2cloud.com/mart-pos/ |
 | Weighbridge (dharam kanta) | https://demo.soft2cloud.com/weighbridge/ |
 | Computer Kanda (price scale) | https://demo.soft2cloud.com/computer-kanda/ |
