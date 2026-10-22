@@ -1,4 +1,83 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<script id="s2c-splash-js">
+/* Soft2Cloud splash screen. Drop into any app:
+   load s2c-splash.js, then call S2CSplash.show({ app: 'VenueDesk', version: '1.0' })
+   Options: app, version, tagline, ms (default 2600), onDone, once ('day' = only first open each day). */
+(function (g) {
+  'use strict';
+  var CSS = '' +
+    '#s2c-splash{position:fixed;inset:0;z-index:2147483646;display:grid;place-items:center;overflow:hidden;' +
+    'background:radial-gradient(120% 90% at 50% 0%,#1d3b86 0%,#0f1a2c 58%,#0a1220 100%);color:#fff;' +
+    'font-family:"Archivo","IBM Plex Sans","Segoe UI",system-ui,sans-serif;transition:opacity .55s ease,visibility .55s ease}' +
+    '#s2c-splash.out{opacity:0;visibility:hidden}' +
+    '#s2c-splash .s2c-glow{position:absolute;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(79,124,255,.35),transparent 65%);filter:blur(10px);animation:s2cPulse 3s ease-in-out infinite}' +
+    '#s2c-splash .s2c-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;padding:24px}' +
+    '#s2c-splash .s2c-mark{width:92px;height:92px;border-radius:24px;background:linear-gradient(140deg,#2f63ef,#1f4fd1);display:grid;place-items:center;' +
+    'box-shadow:0 18px 50px rgba(31,79,209,.55),inset 0 0 0 1px rgba(255,255,255,.25);animation:s2cPop .8s cubic-bezier(.2,1.4,.4,1) both}' +
+    '#s2c-splash .s2c-mark svg{width:56px;height:56px;overflow:visible}' +
+    '#s2c-splash .s2c-mark path{stroke-dasharray:80;stroke-dashoffset:80;animation:s2cDraw 1s .35s ease forwards}' +
+    '#s2c-splash .s2c-welcome{font-size:clamp(.8rem,2.4vw,.95rem);letter-spacing:.32em;text-transform:uppercase;color:#9db8ff;font-weight:600;opacity:0;animation:s2cUp .6s .7s ease forwards}' +
+    '#s2c-splash .s2c-brand{font-size:clamp(2.2rem,8vw,3.6rem);font-weight:800;letter-spacing:-.01em;line-height:1;opacity:0;animation:s2cUp .7s .85s ease forwards}' +
+    '#s2c-splash .s2c-brand span{background:linear-gradient(90deg,#fff 0%,#9db8ff 50%,#fff 100%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:s2cShine 2.4s 1.4s ease-in-out infinite}' +
+    '#s2c-splash .s2c-app{margin-top:6px;display:flex;align-items:center;gap:10px;font-size:clamp(1rem,3vw,1.2rem);font-weight:700;opacity:0;animation:s2cUp .6s 1.15s ease forwards}' +
+    '#s2c-splash .s2c-app small{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:.75rem;font-weight:500;color:#9fb0cc;border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:2px 9px}' +
+    '#s2c-splash .s2c-tag{font-size:.9rem;color:#9fb0cc;font-family:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;opacity:0;animation:s2cUp .6s 1.3s ease forwards}' +
+    '#s2c-splash .s2c-bar{width:min(240px,60vw);height:3px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:10px;opacity:0;animation:s2cUp .4s 1.3s ease forwards}' +
+    '#s2c-splash .s2c-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#4f7cff,#9db8ff);border-radius:3px;animation:s2cFill var(--s2c-ms,2600ms) linear forwards}' +
+    '#s2c-splash .s2c-foot{position:absolute;bottom:calc(22px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;font-size:.75rem;color:#6f80a0;letter-spacing:.06em;font-family:"IBM Plex Sans","Segoe UI",system-ui,sans-serif}' +
+    '#s2c-splash .s2c-skip{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));right:calc(16px + env(safe-area-inset-right,0px));background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#c9d3e4;border-radius:999px;padding:6px 14px;font:600 .8rem "IBM Plex Sans","Segoe UI",system-ui,sans-serif;cursor:pointer}' +
+    '#s2c-splash .s2c-skip:hover{background:rgba(255,255,255,.16);color:#fff}' +
+    '@keyframes s2cPop{from{transform:scale(.4) rotate(-12deg);opacity:0}to{transform:none;opacity:1}}' +
+    '@keyframes s2cDraw{to{stroke-dashoffset:0}}' +
+    '@keyframes s2cUp{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}' +
+    '@keyframes s2cShine{0%,100%{background-position:100% 0}50%{background-position:0 0}}' +
+    '@keyframes s2cPulse{0%,100%{transform:scale(.9);opacity:.7}50%{transform:scale(1.08);opacity:1}}' +
+    '@keyframes s2cFill{to{width:100%}}' +
+    '@media (prefers-reduced-motion:reduce){#s2c-splash *{animation-duration:.01ms!important;animation-delay:0s!important}#s2c-splash .s2c-bar i{animation:s2cFill var(--s2c-ms,2600ms) linear forwards!important}}';
+
+  function seenToday(key) {
+    try { var d = new Date().toDateString(); if (localStorage.getItem(key) === d) return true; localStorage.setItem(key, d); } catch (e) {}
+    return false;
+  }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  function show(opts) {
+    opts = opts || {};
+    var ms = opts.ms || 2600, done = false;
+    if (opts.once === 'day' && seenToday('s2c-splash-' + (opts.app || 'app'))) { if (opts.onDone) opts.onDone(); return; }
+    if (!document.getElementById('s2c-splash-css')) { var st = document.createElement('style'); st.id = 's2c-splash-css'; st.textContent = CSS; document.head.appendChild(st); }
+    var old = document.getElementById('s2c-splash'); if (old) old.remove();
+    var el = document.createElement('div');
+    el.id = 's2c-splash'; el.setAttribute('role', 'status'); el.setAttribute('aria-label', 'Welcome to Soft2Cloud, loading ' + (opts.app || ''));
+    el.style.setProperty('--s2c-ms', ms + 'ms');
+    el.innerHTML = '<div class="s2c-glow"></div>' +
+      '<button class="s2c-skip" type="button">Skip</button>' +
+      '<div class="s2c-box">' +
+        '<div class="s2c-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.4 9.2 4.5 4.5 0 0 0 7 18z"/></svg></div>' +
+        '<div class="s2c-welcome">Welcome to</div>' +
+        '<div class="s2c-brand"><span>Soft2Cloud</span></div>' +
+        (opts.app ? '<div class="s2c-app">' + esc(opts.app) + (opts.version ? '<small>v' + esc(opts.version) + '</small>' : '') + '</div>' : '') +
+        (opts.tagline ? '<div class="s2c-tag">' + esc(opts.tagline) + '</div>' : '') +
+        '<div class="s2c-bar"><i></i></div>' +
+      '</div>' +
+      '<div class="s2c-foot">Powered by Soft2Cloud · soft2cloud.com</div>';
+    (document.body || document.documentElement).appendChild(el);
+    function finish() {
+      if (done) return; done = true;
+      el.classList.add('out');
+      setTimeout(function () { el.remove(); }, 600);
+      if (opts.onDone) opts.onDone();
+    }
+    el.querySelector('.s2c-skip').addEventListener('click', finish);
+    setTimeout(finish, ms + 200);
+    return { close: finish };
+  }
+  g.S2CSplash = { show: show };
+})(window);
+
+S2CSplash.show({app:'Computer Kanda',version:"1.0",tagline:'Price computing scale'});
+</script>
+
 <style>body{margin:0}[hidden]{display:none!important}</style>
 <title>Computer Kanda</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
